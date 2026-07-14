@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freelance Jobs Board — Exordium</title>
+<meta name="description" content="Public EVE Online freelance jobs board for Exordium — a pocket with no flyable route to the rest of New Eden, tracked separately.">
+<link rel="canonical" href="https://jobs.tonicbeacon.com/exordium/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Freelance Jobs Board — Exordium">
+<meta property="og:description" content="Public EVE Online freelance jobs board for Exordium — a pocket with no flyable route to the rest of New Eden, tracked separately.">
+<meta property="og:url" content="https://jobs.tonicbeacon.com/exordium/">
+<meta name="twitter:card" content="summary">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://esi.evetech.net; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'none'; form-action 'none';">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>Freelance Jobs Board <span>/ Exordium</span></h1>
+      <p data-i18n="subtitle_exordium"></p>
+    </div>
+    <div class="controls">
+      <span class="timestamp" id="timestamp"></span>
+      <button class="btn" id="auto-refresh" data-i18n="auto_refresh" data-i18n-title="auto_refresh_title"></button>
+      <button class="btn" id="refresh" data-i18n="refresh"></button>
+    </div>
+  </header>
+
+  <nav class="board-nav">
+    <a href="../" data-i18n="nav_new_eden"></a>
+    <a class="active" href="./" data-i18n="nav_exordium"></a>
+    <a href="../faq/" data-i18n="nav_faq"></a>
+  </nav>
+
+  <div class="loading hidden" id="loading" data-i18n="loading"></div>
+  <div class="error-box hidden" id="error"></div>
+
+  <section id="panel-jobs">
+    <div class="section-title" data-i18n="sec_jobs"></div>
+    <div class="toolbar">
+      <div class="field">
+        <label for="jobs-type" data-i18n="jobs_filter_type"></label>
+        <select id="jobs-type"></select>
+      </div>
+      <div class="field">
+        <label for="jobs-region" data-i18n="jobs_filter_region"></label>
+        <select id="jobs-region"></select>
+      </div>
+      <div class="field">
+        <label for="jobs-sort" data-i18n="jobs_sort_label"></label>
+        <select id="jobs-sort"></select>
+      </div>
+      <button class="btn" id="jobs-reset" data-i18n="jobs_reset"></button>
+      <span class="jobs-count" id="jobs-count"></span>
+    </div>
+    <div class="toolbar">
+      <div class="field">
+        <label for="jobs-market" data-i18n="jobs_market_label"></label>
+        <select id="jobs-market"></select>
+      </div>
+      <div class="field">
+        <label for="jobs-min-isk" data-i18n="jobs_min_isk"></label>
+        <input id="jobs-min-isk" type="number" min="0" step="1" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="jobs-max-isk" data-i18n="jobs_max_isk"></label>
+        <input id="jobs-max-isk" type="number" min="0" step="1" inputmode="numeric">
+      </div>
+      <label class="checkbox-label" for="jobs-hide-bad">
+        <input id="jobs-hide-bad" type="checkbox">
+        <span data-i18n="jobs_hide_bad"></span>
+      </label>
+    </div>
+    <div class="toolbar">
+      <div class="field">
+        <label for="jobs-home" data-i18n="jobs_home_label"></label>
+        <input id="jobs-home" type="text" list="jobs-home-list" data-i18n-placeholder="jobs_home_placeholder" autocomplete="off">
+        <datalist id="jobs-home-list"></datalist>
+      </div>
+      <div class="field">
+        <label for="jobs-max-jumps" data-i18n="jobs_max_jumps"></label>
+        <input id="jobs-max-jumps" type="number" min="0" step="1" inputmode="numeric">
+      </div>
+      <span class="jobs-count" id="jobs-progress"></span>
+    </div>
+    <div class="scroll-hint">Scroll table sideways for reward, value &amp; state →</div>
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="th_job"></th>
+          <th data-i18n="th_location"></th>
+          <th data-i18n="th_progress"></th>
+          <th data-i18n="th_reward_rem"></th>
+          <th data-i18n="th_value"></th>
+          <th data-i18n="th_state"></th>
+        </tr>
+      </thead>
+      <tbody id="jobs-body"></tbody>
+    </table>
+    </div>
+  </section>
+
+  <footer>
+    <div data-i18n="footer_source"></div>
+    <div data-i18n="legal_ccp1"></div>
+    <div data-i18n="legal_ccp2"></div>
+    <div class="mono footer-family">
+      <span data-i18n="footer_family"></span>
+      <a href="https://warzone.tonicbeacon.com" target="_blank" rel="noopener">Warzone Companion</a>
+    </div>
+    <div class="mono"><a href="https://github.com/GurkeTonic/Freelance-Jobs-Board" target="_blank" rel="noopener">GitHub</a> · <a href="../legal/" data-i18n="nav_legal"></a></div>
+  </footer>
+
+</div>
+
+<script src="../js/scope-exordium.js"></script>
+<script src="../js/data/staticdata.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/esi.js"></script>
+<script src="../js/geo.js"></script>
+<script src="../js/jobs.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>
