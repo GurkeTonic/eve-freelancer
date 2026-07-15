@@ -272,14 +272,13 @@ td .sub { display: block; font-size: 11px; color: var(--muted); margin-top: 3px;
 .job-desc { font-size: 13px; color: var(--text); white-space: pre-line; }
 
 /* ---------- States ---------- */
-.loading, .error-box {
+.error-box {
   padding: 32px 20px;
   text-align: center;
-  color: var(--muted);
+  color: var(--danger);
   font-family: var(--font-mono);
   font-size: 13px;
 }
-.error-box { color: var(--danger); }
 .hidden { display: none !important; }
 
 /* ---------- FAQ ---------- */

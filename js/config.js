@@ -2,6 +2,8 @@
 "use strict";
 
 const CONFIG = {
+  /* ESI_BASE, COMPAT_DATE, USER_AGENT are synced from tools/esi_shared.py
+     by tools/sync_config.py — edit them there, not here. */
   ESI_BASE: "https://esi.evetech.net",
   COMPAT_DATE: "2026-06-09",
   /* Sent as X-User-Agent on every ESI request (browsers drop User-Agent
@@ -39,8 +41,7 @@ const MARKETS = {
   ]
 };
 
-function availableMarkets() {
-  const scope = typeof PAGE_SCOPE !== "undefined" ? PAGE_SCOPE : "main";
+function availableMarkets(scope) {
   return MARKETS[scope] || MARKETS.main;
 }
 

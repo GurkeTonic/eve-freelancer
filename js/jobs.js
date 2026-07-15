@@ -1,7 +1,32 @@
-/* Freelance jobs board. Depends on config.js, i18n.js, esi.js, geo.js. */
+/* Freelance jobs board. Depends on config.js, i18n.js, esi.js, geo.js.
+
+   createJobsView() is instantiated once per board (New Eden, Exordium) —
+   both panels ship in every page (see index.html) and live in the DOM at
+   once, so each needs its own state closure and its own element ids
+   (jobIds() below) rather than sharing "jobs-body" etc. between them. */
 "use strict";
 
-const JobsView = (() => {
+function jobIds(scope) {
+  const p = `jobs-${scope}-`;
+  return {
+    type: p + "type",
+    region: p + "region",
+    sort: p + "sort",
+    reset: p + "reset",
+    count: p + "count",
+    market: p + "market",
+    minIsk: p + "min-isk",
+    maxIsk: p + "max-isk",
+    hideBad: p + "hide-bad",
+    home: p + "home",
+    homeList: p + "home-list",
+    maxJumps: p + "max-jumps",
+    progress: p + "progress",
+    body: p + "body"
+  };
+}
+
+function createJobsView(scope, geo, ids) {
   let jobs = [];
   let typeFilter = "__all";
   let regionFilter = "__all";
@@ -11,7 +36,7 @@ const JobsView = (() => {
   let homeSystemId = null;
   let maxJumps = null;
   let hideBadDeals = false;
-  let market = availableMarkets()[0];
+  let market = availableMarkets(scope)[0];
   const detailCache = new Map();
   const priceMap = new Map(); // "marketKey:type_id" -> { buy }
   let detailsDone = 0;
@@ -73,7 +98,7 @@ const JobsView = (() => {
     job.description = d.details?.description ?? null;
     job.rewardPerContribution = d.contribution?.reward_per_contribution ?? null;
     job.broadcastLocations = d.access_and_visibility?.broadcast_locations || [];
-    job.regions = [...new Set(job.broadcastLocations.map(l => Geo.regionOf(l.id)).filter(Boolean))];
+    job.regions = [...new Set(job.broadcastLocations.map(l => geo.regionOf(l.id)).filter(Boolean))];
     job.priceableTypeId = extractPriceableType(job.method, d.configuration);
     job._detailLoaded = true;
   }
@@ -141,11 +166,11 @@ const JobsView = (() => {
 
   async function prefetchPrices(onProgress) {
     const activeMarket = market;
-    const ids = [...new Set(jobs.map(j => j.priceableTypeId).filter(Boolean))]
+    const ids2 = [...new Set(jobs.map(j => j.priceableTypeId).filter(Boolean))]
       .filter(id => !priceMap.has(`${activeMarket.key}:${id}`));
-    pricingTotal = ids.length;
+    pricingTotal = ids2.length;
     pricingDone = 0;
-    await runPool(ids, CONFIG.MARKET_CONCURRENCY, async id => {
+    await runPool(ids2, CONFIG.MARKET_CONCURRENCY, async id => {
       try {
         await fetchMarketPrice(activeMarket, id);
       } catch (err) {
@@ -174,22 +199,21 @@ const JobsView = (() => {
   }
 
   /* Exordium has no flyable route to the rest of New Eden (see geo.js) — each
-     page only ever considers broadcast locations on its own side of that gap. */
-  const pageScope = typeof PAGE_SCOPE !== "undefined" ? PAGE_SCOPE : "main";
+     board only ever considers broadcast locations on its own side of that gap. */
   function scopedLocations(job) {
     return (job.broadcastLocations || []).filter(l =>
-      (Geo.regionOf(l.id) === EXORDIUM_REGION) === (pageScope === "exordium")
+      (geo.regionOf(l.id) === EXORDIUM_REGION) === (scope === "exordium")
     );
   }
   function scopedRegions(job) {
-    return [...new Set(scopedLocations(job).map(l => Geo.regionOf(l.id)).filter(Boolean))];
+    return [...new Set(scopedLocations(job).map(l => geo.regionOf(l.id)).filter(Boolean))];
   }
   /* A job with no broadcast-location data at all isn't confirmed Exordium-only —
      default it to the main New Eden board rather than hiding it everywhere. */
   function belongsToThisPage(job) {
     if (!job._detailLoaded) return true;
     const all = job.broadcastLocations || [];
-    if (all.length === 0) return pageScope !== "exordium";
+    if (all.length === 0) return scope !== "exordium";
     return scopedLocations(job).length > 0;
   }
 
@@ -197,7 +221,7 @@ const JobsView = (() => {
     const locs = scopedLocations(job);
     if (locs.length === 0) return null;
     if (!homeSystemId) return { ...locs[0], jumps: null };
-    const dist = Geo.jumpsFrom(homeSystemId);
+    const dist = geo.jumpsFrom(homeSystemId);
     if (!dist) return { ...locs[0], jumps: null };
     let best = null;
     for (const l of locs) {
@@ -339,7 +363,7 @@ const JobsView = (() => {
   }
 
   function bindControlsOnce() {
-    const sortSel = document.getElementById("jobs-sort");
+    const sortSel = document.getElementById(ids.sort);
     if (sortSel.options.length === 0) {
       for (const s of ["payout_desc", "payout_asc", "progress_desc", "name_asc", "distance_asc", "expires_asc"]) {
         const opt = document.createElement("option");
@@ -351,22 +375,22 @@ const JobsView = (() => {
       sortSel.addEventListener("change", () => { sortMode = sortSel.value; render(); });
     }
 
-    const marketSel = document.getElementById("jobs-market");
+    const marketSel = document.getElementById(ids.market);
     if (marketSel.options.length === 0) {
-      for (const m of availableMarkets()) {
+      for (const m of availableMarkets(scope)) {
         const opt = document.createElement("option");
         opt.value = m.key;
         opt.textContent = m.name;
         marketSel.appendChild(opt);
       }
-      const saved = localStorage.getItem("fjb_market_" + pageScope);
-      if (saved && availableMarkets().some(m => m.key === saved)) {
-        market = availableMarkets().find(m => m.key === saved);
+      const saved = localStorage.getItem("fjb_market_" + scope);
+      if (saved && availableMarkets(scope).some(m => m.key === saved)) {
+        market = availableMarkets(scope).find(m => m.key === saved);
       }
       marketSel.value = market.key;
       marketSel.addEventListener("change", async () => {
-        market = availableMarkets().find(m => m.key === marketSel.value) || availableMarkets()[0];
-        localStorage.setItem("fjb_market_" + pageScope, market.key);
+        market = availableMarkets(scope).find(m => m.key === marketSel.value) || availableMarkets(scope)[0];
+        localStorage.setItem("fjb_market_" + scope, market.key);
         render();
         try {
           await prefetchPrices((done, total) => {
@@ -375,13 +399,13 @@ const JobsView = (() => {
           render();
         } catch (err) {
           render();
-          document.getElementById("jobs-progress").textContent = t("enrich_aborted");
+          document.getElementById(ids.progress).textContent = t("enrich_aborted");
           if (!err.rateLimited) App.reportError(err);
         }
       });
     }
 
-    const typeSel = document.getElementById("jobs-type");
+    const typeSel = document.getElementById(ids.type);
     if (!typeSel.dataset.bound) {
       typeSel.dataset.bound = "1";
       typeSel.addEventListener("change", () => { typeFilter = typeSel.value; render(); });
@@ -389,7 +413,7 @@ const JobsView = (() => {
     rebuildSelect(typeSel, distinctTypes(), typeFilter, t("jobs_type_all"), jobMethodLabel);
     typeFilter = typeSel.value;
 
-    const regionSel = document.getElementById("jobs-region");
+    const regionSel = document.getElementById(ids.region);
     if (!regionSel.dataset.bound) {
       regionSel.dataset.bound = "1";
       regionSel.addEventListener("change", () => { regionFilter = regionSel.value; render(); });
@@ -397,8 +421,8 @@ const JobsView = (() => {
     rebuildSelect(regionSel, distinctRegions(), regionFilter, t("jobs_region_all"));
     regionFilter = regionSel.value;
 
-    const minEl = document.getElementById("jobs-min-isk");
-    const maxEl = document.getElementById("jobs-max-isk");
+    const minEl = document.getElementById(ids.minIsk);
+    const maxEl = document.getElementById(ids.maxIsk);
     if (!minEl.dataset.bound) {
       minEl.dataset.bound = "1";
       const parse = v => (v.trim() === "" ? null : Number(v) * 1e6);
@@ -406,22 +430,22 @@ const JobsView = (() => {
       maxEl.addEventListener("change", () => { maxIsk = parse(maxEl.value); render(); });
     }
 
-    const homeEl = document.getElementById("jobs-home");
-    const homeList = document.getElementById("jobs-home-list");
-    const jumpsEl = document.getElementById("jobs-max-jumps");
+    const homeEl = document.getElementById(ids.home);
+    const homeList = document.getElementById(ids.homeList);
+    const jumpsEl = document.getElementById(ids.maxJumps);
     if (!homeEl.dataset.bound) {
       homeEl.dataset.bound = "1";
-      /* Scoped per page — New Eden and Exordium systems aren't the same set
+      /* Scoped per board — New Eden and Exordium systems aren't the same set
          (see geo.js), so a home system saved on one board is meaningless,
          unresolvable noise on the other if shared under one key. */
-      const homeKey = "fjb_home_name_" + pageScope;
+      const homeKey = "fjb_home_name_" + scope;
       homeEl.value = localStorage.getItem(homeKey) || "";
-      homeSystemId = Geo.systemIdByName(homeEl.value);
+      homeSystemId = geo.systemIdByName(homeEl.value);
       homeEl.addEventListener("input", () => {
-        homeList.innerHTML = Geo.searchSystems(homeEl.value)
+        homeList.innerHTML = geo.searchSystems(homeEl.value)
           .map(e => `<option value="${esc(e.name)}"></option>`)
           .join("");
-        const id = Geo.systemIdByName(homeEl.value);
+        const id = geo.systemIdByName(homeEl.value);
         if (id) {
           homeSystemId = id;
           localStorage.setItem(homeKey, homeEl.value);
@@ -438,13 +462,13 @@ const JobsView = (() => {
       });
     }
 
-    const hideBadEl = document.getElementById("jobs-hide-bad");
+    const hideBadEl = document.getElementById(ids.hideBad);
     if (!hideBadEl.dataset.bound) {
       hideBadEl.dataset.bound = "1";
       hideBadEl.addEventListener("change", () => { hideBadDeals = hideBadEl.checked; render(); });
     }
 
-    const resetEl = document.getElementById("jobs-reset");
+    const resetEl = document.getElementById(ids.reset);
     if (!resetEl.dataset.bound) {
       resetEl.dataset.bound = "1";
       resetEl.addEventListener("click", resetFilters);
@@ -465,14 +489,14 @@ const JobsView = (() => {
     homeSystemId = null;
     maxJumps = null;
 
-    document.getElementById("jobs-type").value = "__all";
-    document.getElementById("jobs-region").value = "__all";
-    document.getElementById("jobs-min-isk").value = "";
-    document.getElementById("jobs-max-isk").value = "";
-    document.getElementById("jobs-hide-bad").checked = false;
-    document.getElementById("jobs-home").value = "";
-    document.getElementById("jobs-max-jumps").value = "";
-    localStorage.removeItem("fjb_home_name_" + pageScope);
+    document.getElementById(ids.type).value = "__all";
+    document.getElementById(ids.region).value = "__all";
+    document.getElementById(ids.minIsk).value = "";
+    document.getElementById(ids.maxIsk).value = "";
+    document.getElementById(ids.hideBad).checked = false;
+    document.getElementById(ids.home).value = "";
+    document.getElementById(ids.maxJumps).value = "";
+    localStorage.removeItem("fjb_home_name_" + scope);
 
     render();
   }
@@ -490,7 +514,7 @@ const JobsView = (() => {
   function render() {
     bindControlsOnce();
 
-    const body = document.getElementById("jobs-body");
+    const body = document.getElementById(ids.body);
     body.innerHTML = "";
 
     const visible = visibleJobs();
@@ -533,10 +557,13 @@ const JobsView = (() => {
       body.appendChild(tr);
     }
 
-    document.getElementById("jobs-count").textContent =
+    document.getElementById(ids.count).textContent =
       t("jobs_count", { shown: fmtNum(visible.length), total: fmtNum(jobs.length) });
-    document.getElementById("jobs-progress").textContent = progressNote();
+    document.getElementById(ids.progress).textContent = progressNote();
   }
 
   return { load, render, prefetchDetails, prefetchPrices };
-})();
+}
+
+const NewEdenJobsView = createJobsView("main", GeoMain, jobIds("main"));
+const ExordiumJobsView = createJobsView("exordium", GeoExordium, jobIds("exordium"));

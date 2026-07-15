@@ -1,21 +1,23 @@
 <!DOCTYPE html>
+<!-- Source template. After editing, run: python tools/build_pages.py
+     to regenerate the subpages (exordium/, faq/) and sitemap.xml. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Freelance Jobs Board — EVE Online</title>
 <meta name="description" content="Public EVE Online freelance jobs board: sort by payout, filter by type/region, check payout vs. market value, browse open tasks New Eden-wide.">
-<link rel="canonical" href="https://jobs.tonicbeacon.com/">
+<link rel="canonical" href="https://freelancer.tonicbeacon.com/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Freelance Jobs Board — EVE Online">
 <meta property="og:description" content="Public EVE Online freelance jobs board: sort by payout, filter by type/region, check payout vs. market value, browse open tasks New Eden-wide.">
-<meta property="og:url" content="https://jobs.tonicbeacon.com/">
+<meta property="og:url" content="https://freelancer.tonicbeacon.com/">
 <meta name="twitter:card" content="summary">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://esi.evetech.net; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'none'; form-action 'none';">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/app.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/app.css">
 </head>
-<body>
+<body data-tab="main">
 <div class="wrap">
 
   <header>
@@ -31,61 +33,60 @@
   </header>
 
   <nav class="board-nav">
-    <a class="active" href="./" data-i18n="nav_new_eden"></a>
-    <a href="exordium/" data-i18n="nav_exordium"></a>
-    <a href="faq/" data-i18n="nav_faq"></a>
+    <a id="tab-main" href="/" data-i18n="nav_new_eden"></a>
+    <a id="tab-exordium" href="/exordium/" data-i18n="nav_exordium"></a>
+    <a id="tab-faq" href="/faq/" data-i18n="nav_faq"></a>
   </nav>
 
-  <div class="loading hidden" id="loading" data-i18n="loading"></div>
   <div class="error-box hidden" id="error"></div>
 
-  <section id="panel-jobs">
-    <div class="section-title" data-i18n="sec_jobs"></div>
+  <!-- New Eden -->
+  <section id="panel-main" class="hidden">
     <div class="toolbar">
       <div class="field">
-        <label for="jobs-type" data-i18n="jobs_filter_type"></label>
-        <select id="jobs-type"></select>
+        <label for="jobs-main-type" data-i18n="jobs_filter_type"></label>
+        <select id="jobs-main-type"></select>
       </div>
       <div class="field">
-        <label for="jobs-region" data-i18n="jobs_filter_region"></label>
-        <select id="jobs-region"></select>
+        <label for="jobs-main-region" data-i18n="jobs_filter_region"></label>
+        <select id="jobs-main-region"></select>
       </div>
       <div class="field">
-        <label for="jobs-sort" data-i18n="jobs_sort_label"></label>
-        <select id="jobs-sort"></select>
+        <label for="jobs-main-sort" data-i18n="jobs_sort_label"></label>
+        <select id="jobs-main-sort"></select>
       </div>
-      <button class="btn" id="jobs-reset" data-i18n="jobs_reset"></button>
-      <span class="jobs-count" id="jobs-count"></span>
+      <button class="btn" id="jobs-main-reset" data-i18n="jobs_reset"></button>
+      <span class="jobs-count" id="jobs-main-count"></span>
     </div>
     <div class="toolbar">
       <div class="field">
-        <label for="jobs-market" data-i18n="jobs_market_label"></label>
-        <select id="jobs-market"></select>
+        <label for="jobs-main-market" data-i18n="jobs_market_label"></label>
+        <select id="jobs-main-market"></select>
       </div>
       <div class="field">
-        <label for="jobs-min-isk" data-i18n="jobs_min_isk"></label>
-        <input id="jobs-min-isk" type="number" min="0" step="1" inputmode="numeric">
+        <label for="jobs-main-min-isk" data-i18n="jobs_min_isk"></label>
+        <input id="jobs-main-min-isk" type="number" min="0" step="1" inputmode="numeric">
       </div>
       <div class="field">
-        <label for="jobs-max-isk" data-i18n="jobs_max_isk"></label>
-        <input id="jobs-max-isk" type="number" min="0" step="1" inputmode="numeric">
+        <label for="jobs-main-max-isk" data-i18n="jobs_max_isk"></label>
+        <input id="jobs-main-max-isk" type="number" min="0" step="1" inputmode="numeric">
       </div>
-      <label class="checkbox-label" for="jobs-hide-bad">
-        <input id="jobs-hide-bad" type="checkbox">
+      <label class="checkbox-label" for="jobs-main-hide-bad">
+        <input id="jobs-main-hide-bad" type="checkbox">
         <span data-i18n="jobs_hide_bad"></span>
       </label>
     </div>
     <div class="toolbar">
       <div class="field">
-        <label for="jobs-home" data-i18n="jobs_home_label"></label>
-        <input id="jobs-home" type="text" list="jobs-home-list" data-i18n-placeholder="jobs_home_placeholder" autocomplete="off">
-        <datalist id="jobs-home-list"></datalist>
+        <label for="jobs-main-home" data-i18n="jobs_home_label"></label>
+        <input id="jobs-main-home" type="text" list="jobs-main-home-list" data-i18n-placeholder="jobs_home_placeholder" autocomplete="off">
+        <datalist id="jobs-main-home-list"></datalist>
       </div>
       <div class="field">
-        <label for="jobs-max-jumps" data-i18n="jobs_max_jumps"></label>
-        <input id="jobs-max-jumps" type="number" min="0" step="1" inputmode="numeric">
+        <label for="jobs-main-max-jumps" data-i18n="jobs_max_jumps"></label>
+        <input id="jobs-main-max-jumps" type="number" min="0" step="1" inputmode="numeric">
       </div>
-      <span class="jobs-count" id="jobs-progress"></span>
+      <span class="jobs-count" id="jobs-main-progress"></span>
     </div>
     <div class="scroll-hint">Scroll table sideways for reward, value &amp; state →</div>
     <div class="table-scroll">
@@ -100,8 +101,167 @@
           <th data-i18n="th_state"></th>
         </tr>
       </thead>
-      <tbody id="jobs-body"></tbody>
+      <tbody id="jobs-main-body"></tbody>
     </table>
+    </div>
+  </section>
+
+  <!-- Exordium -->
+  <section id="panel-exordium" class="hidden">
+    <div class="toolbar">
+      <div class="field">
+        <label for="jobs-exordium-type" data-i18n="jobs_filter_type"></label>
+        <select id="jobs-exordium-type"></select>
+      </div>
+      <div class="field">
+        <label for="jobs-exordium-region" data-i18n="jobs_filter_region"></label>
+        <select id="jobs-exordium-region"></select>
+      </div>
+      <div class="field">
+        <label for="jobs-exordium-sort" data-i18n="jobs_sort_label"></label>
+        <select id="jobs-exordium-sort"></select>
+      </div>
+      <button class="btn" id="jobs-exordium-reset" data-i18n="jobs_reset"></button>
+      <span class="jobs-count" id="jobs-exordium-count"></span>
+    </div>
+    <div class="toolbar">
+      <div class="field">
+        <label for="jobs-exordium-market" data-i18n="jobs_market_label"></label>
+        <select id="jobs-exordium-market"></select>
+      </div>
+      <div class="field">
+        <label for="jobs-exordium-min-isk" data-i18n="jobs_min_isk"></label>
+        <input id="jobs-exordium-min-isk" type="number" min="0" step="1" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="jobs-exordium-max-isk" data-i18n="jobs_max_isk"></label>
+        <input id="jobs-exordium-max-isk" type="number" min="0" step="1" inputmode="numeric">
+      </div>
+      <label class="checkbox-label" for="jobs-exordium-hide-bad">
+        <input id="jobs-exordium-hide-bad" type="checkbox">
+        <span data-i18n="jobs_hide_bad"></span>
+      </label>
+    </div>
+    <div class="toolbar">
+      <div class="field">
+        <label for="jobs-exordium-home" data-i18n="jobs_home_label"></label>
+        <input id="jobs-exordium-home" type="text" list="jobs-exordium-home-list" data-i18n-placeholder="jobs_home_placeholder" autocomplete="off">
+        <datalist id="jobs-exordium-home-list"></datalist>
+      </div>
+      <div class="field">
+        <label for="jobs-exordium-max-jumps" data-i18n="jobs_max_jumps"></label>
+        <input id="jobs-exordium-max-jumps" type="number" min="0" step="1" inputmode="numeric">
+      </div>
+      <span class="jobs-count" id="jobs-exordium-progress"></span>
+    </div>
+    <div class="scroll-hint">Scroll table sideways for reward, value &amp; state →</div>
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="th_job"></th>
+          <th data-i18n="th_location"></th>
+          <th data-i18n="th_progress"></th>
+          <th data-i18n="th_reward_rem"></th>
+          <th data-i18n="th_value"></th>
+          <th data-i18n="th_state"></th>
+        </tr>
+      </thead>
+      <tbody id="jobs-exordium-body"></tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="panel-faq" class="hidden">
+    <div class="section-title">General</div>
+    <div class="faq">
+
+      <details class="faq-item">
+        <summary>What is this?</summary>
+        <p>A public, read-only board for EVE Online's Freelance Jobs system. It fetches the public <span class="mono">/freelance-jobs</span> endpoint from CCP's ESI API directly in your browser — no login, no account, no backend. Built to fix the in-game board's biggest complaints: no sort by payout, no filtering, no way to tell if a job pays below market value.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Why is there a separate board for New Eden and Exordium?</summary>
+        <p>Exordium is the new rookie starter region — it connects to the rest of New Eden through exactly one gate (Manifest → Yulai), and once a character leaves through it, there's no way back in. Its player base is disjoint from the rest of New Eden by construction, so mixing its jobs into the main board would only confuse both audiences. Same layout, same features, separate data.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Why don't I see Completed, Expired, or Closed jobs?</summary>
+        <p>Every job the public endpoint has ever returned in testing was <span class="mono">Active</span>. Completed/expired/closed jobs apparently aren't surfaced by the public feed at all — so a state filter would just be a permanently-single-valued dropdown. Removed rather than kept as dead UI.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Can I see my own active jobs, or manage my corp's jobs?</summary>
+        <p>No, and this isn't planned. That needs a character login (SSO) and somewhere to hold the resulting token/session — which needs a database. This board is a static site with no backend, so there's nowhere to put one. Not a "maybe later" — a different architecture would be a different project.</p>
+      </details>
+
+    </div>
+
+    <div class="section-title">The value-vs-market check</div>
+    <div class="faq">
+
+      <details class="faq-item">
+        <summary>What does the "Value vs. market" percentage mean?</summary>
+        <p>For jobs that deliver or mine exactly one concrete item/ore type, the board fetches that type's best buy order at your selected reference market and compares it to the job's reward per contribution. 100% means the job pays exactly what you'd get instant-selling the same item on the market; under 100% means the job pays worse than just selling it; over 100% means it pays better. Below 90% is flagged red, above 110% is flagged green.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Why do some jobs show "no market price"?</summary>
+        <p>Two reasons. First: some jobs target a whole item or ore <em>group</em> (e.g. "any ore in group X") rather than one specific type — pricing a group would mean picking a representative member and guessing, so the board shows "no market price" instead of a number that might be misleading. Second: the item/ore type might genuinely have no buy orders at your selected market — small or rookie-region hubs especially.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>What's the "Reference market" dropdown for?</summary>
+        <p>The value check needs a market to compare against, and not everyone sells at the same place. New Eden offers the traditional big-4 empire trade hubs: Jita, Amarr, Dodixie, Rens. Exordium offers its own hub: Manifest's AIR Laboratories Trade Center — the one CCP's devblog names for the region. Switching markets re-fetches only the prices you don't already have cached.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>What does "Hide jobs below market value" actually hide?</summary>
+        <p>Only <em>confirmed</em> bad deals — jobs whose value ratio is under 90% at your selected market. Jobs still waiting on a price, jobs with no orders at that market, and jobs that aren't priceable to begin with all stay visible, since there's nothing to judge them against yet.</p>
+      </details>
+
+    </div>
+
+    <div class="section-title">Location and distance</div>
+    <div class="faq">
+
+      <details class="faq-item">
+        <summary>What's the Location column showing?</summary>
+        <p>The nearest system the job is broadcast from (jobs can be visible from multiple systems), its region, and — once you've set a home system — the jump distance to get there. In-game, jobs are only visible up to 5 jumps from a broadcast location; this board shows every job New Eden-wide regardless of where you are.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>How does the jump-distance calculation work?</summary>
+        <p>A breadth-first search over the k-space stargate graph, generated from CCP's Static Data Export — the same approach used for jump counts on <a href="https://warzone.tonicbeacon.com" target="_blank" rel="noopener">Warzone Companion</a>. It only covers normal stargate connections, not wormholes or special one-way gates like Exordium's link to Yulai — which is exactly why home-system search is scoped separately per board.</p>
+      </details>
+
+    </div>
+
+    <div class="section-title">Data and updates</div>
+    <div class="faq">
+
+      <details class="faq-item">
+        <summary>How fresh is the data?</summary>
+        <p>As fresh as ESI's own cache allows — the board doesn't bypass or force-refresh past that. Click "Refresh" for a manual reload, or turn on "Auto refresh" for one every 5 minutes. The full job list loads first; job type, region, distance, and market value fill in progressively in the background right after.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Is this affiliated with CCP Games?</summary>
+        <p>No. This is an unofficial, non-commercial fan project. "EVE", "EVE Online", "CCP", and all related logos and images are trademarks of CCP hf., used under CCP's <a href="https://developers.eveonline.com/resource/license-agreement" target="_blank" rel="noopener">developer license</a>.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Is my data tracked or stored anywhere?</summary>
+        <p>No accounts, no cookies, no analytics. A handful of preferences (home system, reference market, auto-refresh) are saved only in your browser's local storage, never sent anywhere. Details on the <a href="/legal/">Legal &amp; Privacy</a> page.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Where does this project come from, and where can I report a bug?</summary>
+        <p>Split out of <a href="https://warzone.tonicbeacon.com" target="_blank" rel="noopener">Warzone Companion</a>, where the same feature existed as a buried tab. Source, issues, and pull requests: <a href="https://github.com/GurkeTonic/Freelance-Jobs-Board" target="_blank" rel="noopener">GitHub</a>.</p>
+      </details>
+
     </div>
   </section>
 
@@ -113,18 +273,19 @@
       <span data-i18n="footer_family"></span>
       <a href="https://warzone.tonicbeacon.com" target="_blank" rel="noopener">Warzone Companion</a>
     </div>
-    <div class="mono"><a href="https://github.com/GurkeTonic/Freelance-Jobs-Board" target="_blank" rel="noopener">GitHub</a> · <a href="legal/" data-i18n="nav_legal"></a></div>
+    <div class="mono"><a href="https://github.com/GurkeTonic/Freelance-Jobs-Board" target="_blank" rel="noopener">GitHub</a> · <a href="/legal/" data-i18n="nav_legal"></a></div>
   </footer>
 
 </div>
 
-<script src="js/scope-main.js"></script>
-<script src="js/data/staticdata.js"></script>
-<script src="js/config.js"></script>
-<script src="js/i18n.js"></script>
-<script src="js/esi.js"></script>
-<script src="js/geo.js"></script>
-<script src="js/jobs.js"></script>
-<script src="js/app.js"></script>
+<script src="/js/data/staticdata.js"></script>
+<script src="/js/routes.js"></script>
+<script src="/js/config.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/esi.js"></script>
+<script src="/js/geo.js"></script>
+<script src="/js/jobs.js"></script>
+<script src="/js/app.js"></script>
+<script src="/js/router.js"></script>
 </body>
 </html>

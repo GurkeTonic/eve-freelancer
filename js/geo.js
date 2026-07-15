@@ -4,14 +4,14 @@
    Exordium has no normal-space route to the rest of New Eden — the raw SDE
    stargate table still lists a gate, but it isn't a flyable connection in
    game (confirmed by the user, not something the static data can tell us).
-   Home-system search is scoped by page (js/config.js sets PAGE_SCOPE) so
-   nobody picks a home on the wrong side of that gap. */
+   Home-system search is scoped per board (New Eden vs. Exordium) so nobody
+   picks a home on the wrong side of that gap — createGeo() is instantiated
+   once per scope below, both live in the DOM at once (see js/app.js). */
 "use strict";
 
 const EXORDIUM_REGION = "Exordium";
 
-const Geo = (() => {
-  const scope = typeof PAGE_SCOPE !== "undefined" ? PAGE_SCOPE : "main";
+function createGeo(scope) {
   const nameIndex = Object.entries(SDATA.names)
     .filter(([id]) => (SDATA.regions[id] === EXORDIUM_REGION) === (scope === "exordium"))
     .map(([id, n]) => ({ id: Number(id), name: n, lower: n.toLowerCase() }));
@@ -60,4 +60,7 @@ const Geo = (() => {
   }
 
   return { searchSystems, systemIdByName, regionOf, jumpsFrom };
-})();
+}
+
+const GeoMain = createGeo("main");
+const GeoExordium = createGeo("exordium");
