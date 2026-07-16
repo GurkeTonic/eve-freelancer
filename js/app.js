@@ -101,7 +101,11 @@ const DashboardView = (() => {
     }
     bar.innerHTML = ["hs", "ls", "ns"].map(cls => {
       const pct = Math.round((counts[cls] / total) * 100);
-      return pct > 0 ? `<div class="sec-${cls}" style="flex:${counts[cls]}">${pct}%</div>` : "";
+      if (pct <= 0) return "";
+      /* A narrow sliver can't fit its own "N%" label without overlapping the
+         next segment — drop the label below a threshold, keep the tooltip. */
+      const label = pct >= 8 ? `${pct}%` : "";
+      return `<div class="sec-${cls}" style="flex:${counts[cls]}" title="${pct}%">${label}</div>`;
     }).join("");
     legend.innerHTML = `
       <span class="leg-hs">${t("dash_sec_hs")}</span>
