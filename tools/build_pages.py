@@ -20,7 +20,7 @@ from esi_shared import ESI_BASE, COMPAT_DATE, USER_AGENT
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "index.html"
 CONFIG_JS = ROOT / "js" / "config.js"
-BASE_URL = "https://freelancer.tonicbeacon.com"
+BASE_URL = "https://capsuleerjobs.com"
 
 ROOT_PAGE = {
     "tab": "dashboard",
