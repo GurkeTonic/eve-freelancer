@@ -2,8 +2,11 @@
    every panel (see index.html) — switching boards never needs a real
    navigation, just App.runTab() plus a history entry and updated
    title/canonical/description. Falls back to a real link for anything it
-   doesn't own: external links, modified clicks, JS disabled.
-   Depends on routes.js, app.js (must load after both). */
+   doesn't own: external links, modified clicks, JS disabled, links whose
+   path isn't in ROUTES (e.g. /legal/). Listens on the whole document, not
+   just <nav>, so links elsewhere on the page (the dashboard's per-board
+   tiles) get soft navigation too. Depends on routes.js, app.js (must load
+   after both). */
 "use strict";
 
 const Router = (() => {
@@ -44,7 +47,7 @@ const Router = (() => {
   }
 
   function init() {
-    document.querySelector("nav").addEventListener("click", onNavClick);
+    document.addEventListener("click", onNavClick);
     window.addEventListener("popstate", onPopState);
     history.replaceState({ path: location.pathname }, "", location.pathname);
   }

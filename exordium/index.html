@@ -28,19 +28,60 @@
       <span class="timestamp" id="timestamp"></span>
       <button class="btn" id="auto-refresh" data-i18n="auto_refresh" data-i18n-title="auto_refresh_title"></button>
       <button class="btn" id="refresh" data-i18n="refresh"></button>
+      <button class="btn" id="theme-toggle"></button>
     </div>
   </header>
 
   <nav class="board-nav">
-    <a id="tab-main" href="/" data-i18n="nav_new_eden"></a>
+    <a id="tab-dashboard" href="/" data-i18n="nav_dashboard"></a>
+    <a id="tab-new-eden" href="/new-eden/" data-i18n="nav_new_eden"></a>
     <a id="tab-exordium" href="/exordium/" data-i18n="nav_exordium"></a>
     <a id="tab-faq" href="/faq/" data-i18n="nav_faq"></a>
   </nav>
 
   <div class="error-box hidden" id="error"></div>
 
+  <main>
+  <!-- Dashboard -->
+  <section id="panel-dashboard" class="hidden">
+    <p class="dash-ticker">
+      <span id="dash-active">—</span> <span data-i18n="dash_ticker_active"></span>
+      &middot; <span class="dash-ticker-isk" id="dash-isk">—</span> <span data-i18n="dash_ticker_isk"></span>
+      &middot; <span id="dash-below">—</span> <span data-i18n="dash_ticker_below"></span>
+    </p>
+
+    <h2 class="section-title" data-i18n="dash_deals_title"></h2>
+    <div class="deals-list" id="dash-deals"></div>
+
+    <div class="dash-two-col">
+      <div>
+        <h2 class="section-title" data-i18n="dash_sec_title"></h2>
+        <div class="secbar" id="dash-secbar"></div>
+        <div class="seclegend" id="dash-seclegend"></div>
+      </div>
+      <div>
+        <h2 class="section-title" data-i18n="dash_corps_title"></h2>
+        <div class="corps-list" id="dash-corps"></div>
+      </div>
+    </div>
+
+    <h2 class="section-title" data-i18n="dash_board_split"></h2>
+    <div class="board-split">
+      <a class="board-split-row" href="/new-eden/">
+        <span data-i18n="nav_new_eden"></span>
+        <span class="mono" id="dash-neweden-count">—</span>
+        <span class="mono" id="dash-neweden-isk">—</span>
+      </a>
+      <a class="board-split-row" href="/exordium/">
+        <span data-i18n="nav_exordium"></span>
+        <span class="mono" id="dash-exordium-count">—</span>
+        <span class="mono" id="dash-exordium-isk">—</span>
+      </a>
+    </div>
+  </section>
+
   <!-- New Eden -->
-  <section id="panel-main" class="hidden">
+  <section id="panel-new-eden" class="hidden">
     <div class="toolbar">
       <div class="field">
         <label for="jobs-main-type" data-i18n="jobs_filter_type"></label>
@@ -173,12 +214,17 @@
 
   <!-- FAQ -->
   <section id="panel-faq" class="hidden">
-    <div class="section-title">General</div>
+    <h2 class="section-title">General</h2>
     <div class="faq">
 
       <details class="faq-item">
         <summary>What is this?</summary>
         <p>A public, read-only board for EVE Online's Freelance Jobs system. It fetches the public <span class="mono">/freelance-jobs</span> endpoint from CCP's ESI API directly in your browser — no login, no account, no backend. Built to fix the in-game board's biggest complaints: no sort by payout, no filtering, no way to tell if a job pays below market value.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>What does the Dashboard show?</summary>
+        <p>The best of what's active right now, not a stats report: top payouts per contribution across both boards (click a row to expand its full detail — location, progress, expiry, creator — right there), a highsec/lowsec/nullsec breakdown of where the work is, and which corporations are posting the most jobs. Click either board name under "By board" to jump straight to its table.</p>
       </details>
 
       <details class="faq-item">
@@ -198,7 +244,7 @@
 
     </div>
 
-    <div class="section-title">The value-vs-market check</div>
+    <h2 class="section-title">The value-vs-market check</h2>
     <div class="faq">
 
       <details class="faq-item">
@@ -221,9 +267,14 @@
         <p>Only <em>confirmed</em> bad deals — jobs whose value ratio is under 90% at your selected market. Jobs still waiting on a price, jobs with no orders at that market, and jobs that aren't priceable to begin with all stay visible, since there's nothing to judge them against yet.</p>
       </details>
 
+      <details class="faq-item">
+        <summary>What does "Best value first" sorting do?</summary>
+        <p>Sorts by the same Value vs. market ratio as the column — the job that pays the most relative to what it's actually worth comes first. That's different from sorting by Reward: a job can pay a lot per contribution and still be a mediocre deal if what it asks for is worth even more.</p>
+      </details>
+
     </div>
 
-    <div class="section-title">Location and distance</div>
+    <h2 class="section-title">Location and distance</h2>
     <div class="faq">
 
       <details class="faq-item">
@@ -238,7 +289,7 @@
 
     </div>
 
-    <div class="section-title">Data and updates</div>
+    <h2 class="section-title">Data and updates</h2>
     <div class="faq">
 
       <details class="faq-item">
@@ -263,6 +314,7 @@
 
     </div>
   </section>
+  </main>
 
   <footer>
     <div data-i18n="footer_source"></div>

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Generate js/data/staticdata.js from the EVE SDE (JSONL zip).
 
-Produces the k-space stargate adjacency graph and system/region names for
-every k-space solar system (not just a subset) — used for the "distance
-from home" jump count and region lookup on job broadcast locations.
+Produces the k-space stargate adjacency graph, system/region names, and
+security status for every k-space solar system (not just a subset) — used
+for the "distance from home" jump count, region lookup, and highsec/
+lowsec/nullsec breakdown on job broadcast locations.
 
 Usage:
   python tools/build_static_data.py <path-to-sde-jsonl-zip>
@@ -51,6 +52,7 @@ def main():
             systems[s["_key"]] = {
                 "name": s["name"]["en"],
                 "region": region_names.get(s["regionID"], "?"),
+                "sec": round(s["securityStatus"], 2),
             }
 
         graph = {sid: [] for sid in systems}
@@ -62,12 +64,14 @@ def main():
 
     names = {sid: s["name"] for sid, s in systems.items()}
     regions = {sid: s["region"] for sid, s in systems.items()}
+    sec = {sid: s["sec"] for sid, s in systems.items()}
 
     payload = {
         "build": meta.get("buildNumber"),
         "released": meta.get("releaseDate"),
         "names": names,
         "regions": regions,
+        "sec": sec,
         "graph": graph,
     }
 

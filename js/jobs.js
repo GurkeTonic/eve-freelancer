@@ -26,16 +26,28 @@ function jobIds(scope) {
   };
 }
 
+/* Reads a stored numeric filter value back into a number, or null if
+   unset/invalid. */
+function loadStoredNum(key) {
+  const raw = localStorage.getItem(key);
+  if (raw === null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
 function createJobsView(scope, geo, ids) {
   let jobs = [];
-  let typeFilter = "__all";
-  let regionFilter = "__all";
-  let sortMode = "payout_desc";
-  let minIsk = null;
-  let maxIsk = null;
+  /* Filters/sort persist per board across visits (not just home system and
+     market, which already did) — a returning user's view stays exactly as
+     they left it instead of resetting on every page load. */
+  let typeFilter = localStorage.getItem("fjb_type_" + scope) || "__all";
+  let regionFilter = localStorage.getItem("fjb_region_" + scope) || "__all";
+  let sortMode = localStorage.getItem("fjb_sort_" + scope) || "payout_desc";
+  let minIsk = loadStoredNum("fjb_min_" + scope);
+  let maxIsk = loadStoredNum("fjb_max_" + scope);
   let homeSystemId = null;
-  let maxJumps = null;
-  let hideBadDeals = false;
+  let maxJumps = loadStoredNum("fjb_maxjumps_" + scope);
+  let hideBadDeals = localStorage.getItem("fjb_hidebad_" + scope) === "1";
   let market = availableMarkets(scope)[0];
   const detailCache = new Map();
   const priceMap = new Map(); // "marketKey:type_id" -> { buy }
@@ -44,10 +56,18 @@ function createJobsView(scope, geo, ids) {
   let pricingDone = 0;
   let pricingTotal = 0;
 
+  /* Loaded-once state so DashboardView (which needs both boards' data up
+     front) and a board's own tab (which may be visited before or after the
+     dashboard) never trigger a duplicate fetch of the same data. */
+  let hasLoaded = false;
+
   /* The public list endpoint has no cursor sort — pull every page up front
      (capped) so payout/progress sort is correct across the whole board, not
-     just within one page. */
-  async function load(onProgress) {
+     just within one page. `force` re-fetches even if already loaded (used by
+     the Refresh button and auto-refresh); a plain call from DashboardView or
+     from switching back to an already-visited board is a no-op. */
+  async function load(force = false) {
+    if (hasLoaded && !force) return;
     jobs = [];
     let after = null;
     let page = 0;
@@ -58,10 +78,10 @@ function createJobsView(scope, geo, ids) {
       const res = await ESI.get("/freelance-jobs", params);
       const chunk = res.freelance_jobs || [];
       jobs = jobs.concat(chunk);
-      onProgress?.(page, jobs.length);
       after = res.cursor?.after || null;
-      if (!after || chunk.length === 0) return;
+      if (!after || chunk.length === 0) break;
     }
+    hasLoaded = true;
   }
 
   /* A job is "priceable" when its configuration names exactly one concrete
@@ -183,6 +203,36 @@ function createJobsView(scope, geo, ids) {
     });
   }
 
+  /* Aggregate numbers for DashboardView's summary line. Cheap to recompute
+     on every call — just array scans over data already in memory, no
+     DOM/network work — so it can be called on every dashboard render
+     without its own caching. Scoped through belongsToThisPage() like
+     visibleJobs() is — the raw `jobs` array is the same shared ESI list for
+     every board, undifferentiated until each job's broadcast locations are
+     known (see belongsToThisPage). */
+  function stats() {
+    let totalReward = 0;
+    let priceableCount = 0;
+    let belowMarketCount = 0;
+    const scoped = jobs.filter(belongsToThisPage);
+
+    for (const j of scoped) {
+      totalReward += j.reward?.remaining ?? 0;
+      if (j.priceableTypeId) {
+        priceableCount++;
+        const v = valueVerdict(j);
+        if (v && typeof v === "object" && v.flag === "bad") belowMarketCount++;
+      }
+    }
+
+    return {
+      count: scoped.length,
+      totalReward,
+      priceableCount,
+      belowMarketCount
+    };
+  }
+
   /* { flag: "bad"|"neutral"|"good", ratio } comparing reward/contribution to
      the best buy order at the selected reference market (what you'd get
      instant-selling there), or "pending"/"unknown"/null when not (yet)
@@ -196,6 +246,42 @@ function createJobsView(scope, geo, ids) {
     if (ratio < 0.9) return { flag: "bad", ratio };
     if (ratio > 1.1) return { flag: "good", ratio };
     return { flag: "neutral", ratio };
+  }
+
+  /* Sortable form of valueVerdict() — a plain number for "best value first",
+     or null for anything not (yet) comparable so it sorts to the bottom
+     instead of clumping at a fake 0. */
+  function valueScore(job) {
+    const v = valueVerdict(job);
+    return v && typeof v === "object" ? v.ratio : null;
+  }
+
+  /* Top N jobs by reward per contribution, for DashboardView's highlight
+     list — the actual "here's what's worth grabbing right now" list, not
+     an abstract count. Includes the value ratio (when known) and enough
+     detail (location, progress, expiry, creator) to expand inline right on
+     the dashboard, so a click never dead-ends on the general board page. */
+  function topPayouts(n) {
+    return jobs
+      .filter(belongsToThisPage)
+      .filter(j => j.rewardPerContribution != null)
+      .map(j => {
+        const loc = nearestLocation(j);
+        const creator = j.creator;
+        return {
+          id: j.id,
+          name: j.name || String(j.id),
+          method: j.method,
+          reward: j.rewardPerContribution,
+          ratio: valueScore(j),
+          locationName: loc?.name ?? null,
+          progress: j.progress ? { current: j.progress.current ?? 0, desired: j.progress.desired ?? 0 } : null,
+          expires: j.expires ?? null,
+          creatorName: creator?.corporation?.name || creator?.character?.name || null
+        };
+      })
+      .sort((a, b) => b.reward - a.reward)
+      .slice(0, n);
   }
 
   /* Exordium has no flyable route to the rest of New Eden (see geo.js) — each
@@ -229,6 +315,40 @@ function createJobsView(scope, geo, ids) {
       if (j !== undefined && (best === null || j < best.jumps)) best = { ...l, jumps: j };
     }
     return best || { ...locs[0], jumps: null };
+  }
+
+  /* { hs, ls, ns, unknown } job counts, one classification per job (its
+     first scoped broadcast location — the same one nearestLocation() would
+     pick with no home system set) rather than per location, so a job
+     broadcasting from five highsec stations doesn't outweigh five separate
+     one-location jobs. Only counts jobs whose detail (and so broadcast
+     locations) has loaded. */
+  function securityBreakdown() {
+    const counts = { hs: 0, ls: 0, ns: 0, unknown: 0 };
+    for (const j of jobs.filter(belongsToThisPage)) {
+      if (!j._detailLoaded) continue;
+      const locs = scopedLocations(j);
+      if (locs.length === 0) continue;
+      const cls = geo.secClass(geo.secOf(locs[0].id));
+      counts[cls ?? "unknown"]++;
+    }
+    return counts;
+  }
+
+  /* Top N corporations by number of active jobs posted, for the "who's
+     hiring" list. Only counts jobs whose detail (and so creator) has
+     loaded. */
+  function topCorps(n) {
+    const counts = new Map();
+    for (const j of jobs.filter(belongsToThisPage)) {
+      const name = j.creator?.corporation?.name;
+      if (!name) continue;
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, n);
   }
 
   async function toggleDetail(row, jobId) {
@@ -288,8 +408,8 @@ function createJobsView(scope, geo, ids) {
     let list = jobs.filter(belongsToThisPage);
     if (typeFilter !== "__all") list = list.filter(j => j.method === typeFilter);
     if (regionFilter !== "__all") list = list.filter(j => scopedRegions(j).includes(regionFilter));
-    if (minIsk !== null) list = list.filter(j => (j.reward?.remaining ?? 0) >= minIsk);
-    if (maxIsk !== null) list = list.filter(j => (j.reward?.remaining ?? 0) <= maxIsk);
+    if (minIsk !== null) list = list.filter(j => (j.rewardPerContribution ?? 0) >= minIsk);
+    if (maxIsk !== null) list = list.filter(j => (j.rewardPerContribution ?? 0) <= maxIsk);
     if (homeSystemId && maxJumps !== null) {
       list = list.filter(j => {
         const loc = nearestLocation(j);
@@ -308,7 +428,20 @@ function createJobsView(scope, geo, ids) {
     const sorted = list.slice();
     switch (sortMode) {
       case "payout_asc":
-        sorted.sort((a, b) => (a.reward?.remaining ?? 0) - (b.reward?.remaining ?? 0));
+        sorted.sort((a, b) => {
+          const pa = a.rewardPerContribution, pb = b.rewardPerContribution;
+          if (pa == null) return 1;
+          if (pb == null) return -1;
+          return pa - pb;
+        });
+        break;
+      case "value_desc":
+        sorted.sort((a, b) => {
+          const va = valueScore(a), vb = valueScore(b);
+          if (va == null) return 1;
+          if (vb == null) return -1;
+          return vb - va;
+        });
         break;
       case "progress_desc":
         sorted.sort((a, b) => progressRatio(b) - progressRatio(a));
@@ -336,7 +469,12 @@ function createJobsView(scope, geo, ids) {
         break;
       case "payout_desc":
       default:
-        sorted.sort((a, b) => (b.reward?.remaining ?? 0) - (a.reward?.remaining ?? 0));
+        sorted.sort((a, b) => {
+          const pa = a.rewardPerContribution, pb = b.rewardPerContribution;
+          if (pa == null) return 1;
+          if (pb == null) return -1;
+          return pb - pa;
+        });
     }
     return sorted;
   }
@@ -346,8 +484,14 @@ function createJobsView(scope, geo, ids) {
     return des > 0 ? (j.progress?.current ?? 0) / des : 0;
   }
 
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  function isExpiringSoon(j) {
+    if (!j.expires) return false;
+    const msLeft = Date.parse(j.expires) - Date.now();
+    return msLeft > 0 && msLeft < ONE_DAY_MS;
+  }
+
   function rebuildSelect(sel, values, current, allLabel, labelFn) {
-    const prev = sel.value || current;
     sel.innerHTML = "";
     const optAll = document.createElement("option");
     optAll.value = "__all";
@@ -359,20 +503,31 @@ function createJobsView(scope, geo, ids) {
       opt.textContent = labelFn ? labelFn(v) : v;
       sel.appendChild(opt);
     }
-    sel.value = values.includes(prev) || prev === "__all" ? prev : "__all";
+    /* Nothing known yet (right after load, before detail enrichment has
+       resolved any job's type/region) — don't force a pending filter (e.g.
+       one just restored from localStorage) back to "All" just because we
+       can't validate it against an empty list. Leave it alone; the next
+       render (once values are non-empty) picks the real selection back up. */
+    if (values.length === 0) return false;
+    sel.value = values.includes(current) || current === "__all" ? current : "__all";
+    return true;
   }
 
   function bindControlsOnce() {
     const sortSel = document.getElementById(ids.sort);
     if (sortSel.options.length === 0) {
-      for (const s of ["payout_desc", "payout_asc", "progress_desc", "name_asc", "distance_asc", "expires_asc"]) {
+      for (const s of ["payout_desc", "payout_asc", "value_desc", "progress_desc", "name_asc", "distance_asc", "expires_asc"]) {
         const opt = document.createElement("option");
         opt.value = s;
         opt.textContent = t("sort_" + s);
         sortSel.appendChild(opt);
       }
       sortSel.value = sortMode;
-      sortSel.addEventListener("change", () => { sortMode = sortSel.value; render(); });
+      sortSel.addEventListener("change", () => {
+        sortMode = sortSel.value;
+        localStorage.setItem("fjb_sort_" + scope, sortMode);
+        render();
+      });
     }
 
     const marketSel = document.getElementById(ids.market);
@@ -408,26 +563,50 @@ function createJobsView(scope, geo, ids) {
     const typeSel = document.getElementById(ids.type);
     if (!typeSel.dataset.bound) {
       typeSel.dataset.bound = "1";
-      typeSel.addEventListener("change", () => { typeFilter = typeSel.value; render(); });
+      typeSel.addEventListener("change", () => {
+        typeFilter = typeSel.value;
+        localStorage.setItem("fjb_type_" + scope, typeFilter);
+        render();
+      });
     }
-    rebuildSelect(typeSel, distinctTypes(), typeFilter, t("jobs_type_all"), jobMethodLabel);
-    typeFilter = typeSel.value;
+    if (rebuildSelect(typeSel, distinctTypes(), typeFilter, t("jobs_type_all"), jobMethodLabel)) {
+      typeFilter = typeSel.value;
+    }
 
     const regionSel = document.getElementById(ids.region);
     if (!regionSel.dataset.bound) {
       regionSel.dataset.bound = "1";
-      regionSel.addEventListener("change", () => { regionFilter = regionSel.value; render(); });
+      regionSel.addEventListener("change", () => {
+        regionFilter = regionSel.value;
+        localStorage.setItem("fjb_region_" + scope, regionFilter);
+        render();
+      });
     }
-    rebuildSelect(regionSel, distinctRegions(), regionFilter, t("jobs_region_all"));
-    regionFilter = regionSel.value;
+    if (rebuildSelect(regionSel, distinctRegions(), regionFilter, t("jobs_region_all"))) {
+      regionFilter = regionSel.value;
+    }
 
     const minEl = document.getElementById(ids.minIsk);
     const maxEl = document.getElementById(ids.maxIsk);
     if (!minEl.dataset.bound) {
       minEl.dataset.bound = "1";
+      if (minIsk !== null) minEl.value = minIsk / 1e6;
+      if (maxIsk !== null) maxEl.value = maxIsk / 1e6;
       const parse = v => (v.trim() === "" ? null : Number(v) * 1e6);
-      minEl.addEventListener("change", () => { minIsk = parse(minEl.value); render(); });
-      maxEl.addEventListener("change", () => { maxIsk = parse(maxEl.value); render(); });
+      const persist = (key, value) => {
+        if (value === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, String(value));
+      };
+      minEl.addEventListener("change", () => {
+        minIsk = parse(minEl.value);
+        persist("fjb_min_" + scope, minIsk);
+        render();
+      });
+      maxEl.addEventListener("change", () => {
+        maxIsk = parse(maxEl.value);
+        persist("fjb_max_" + scope, maxIsk);
+        render();
+      });
     }
 
     const homeEl = document.getElementById(ids.home);
@@ -456,8 +635,11 @@ function createJobsView(scope, geo, ids) {
           render();
         }
       });
+      if (maxJumps !== null) jumpsEl.value = maxJumps;
       jumpsEl.addEventListener("change", () => {
         maxJumps = jumpsEl.value.trim() === "" ? null : Number(jumpsEl.value);
+        if (maxJumps === null) localStorage.removeItem("fjb_maxjumps_" + scope);
+        else localStorage.setItem("fjb_maxjumps_" + scope, String(maxJumps));
         render();
       });
     }
@@ -465,7 +647,12 @@ function createJobsView(scope, geo, ids) {
     const hideBadEl = document.getElementById(ids.hideBad);
     if (!hideBadEl.dataset.bound) {
       hideBadEl.dataset.bound = "1";
-      hideBadEl.addEventListener("change", () => { hideBadDeals = hideBadEl.checked; render(); });
+      hideBadEl.checked = hideBadDeals;
+      hideBadEl.addEventListener("change", () => {
+        hideBadDeals = hideBadEl.checked;
+        localStorage.setItem("fjb_hidebad_" + scope, hideBadDeals ? "1" : "0");
+        render();
+      });
     }
 
     const resetEl = document.getElementById(ids.reset);
@@ -496,7 +683,9 @@ function createJobsView(scope, geo, ids) {
     document.getElementById(ids.hideBad).checked = false;
     document.getElementById(ids.home).value = "";
     document.getElementById(ids.maxJumps).value = "";
-    localStorage.removeItem("fjb_home_name_" + scope);
+    for (const key of ["fjb_home_name_", "fjb_type_", "fjb_region_", "fjb_min_", "fjb_max_", "fjb_hidebad_", "fjb_maxjumps_"]) {
+      localStorage.removeItem(key + scope);
+    }
 
     render();
   }
@@ -549,9 +738,9 @@ function createJobsView(scope, geo, ids) {
           <div class="vp-bar"><div class="fill" style="width:${pct.toFixed(1)}%;background:var(--caldari)"></div></div>
           <span class="mono sub">${fmtNum(cur)} / ${fmtNum(des)}</span>
         </td>
-        <td class="mono">${fmtIsk(j.reward?.remaining)} ISK</td>
+        <td class="mono">${j.rewardPerContribution != null ? fmtIsk(j.rewardPerContribution) + " ISK" : (j._detailLoaded ? "—" : "…")}</td>
         <td>${verdictHtml}</td>
-        <td><span class="status-pill${j.state === "Active" ? "" : " dim"}">${esc(j.state)}</span>${j.expires ? `<span class="sub">${t("expires_short", { date: fmtDate(j.expires) })}</span>` : ""}</td>
+        <td><span class="status-pill${j.state === "Active" ? "" : " dim"}">${esc(j.state)}</span>${j.expires ? `<span class="sub${isExpiringSoon(j) ? " soon" : ""}">${t("expires_short", { date: fmtDate(j.expires) })}</span>` : ""}</td>
       `;
       tr.addEventListener("click", () => toggleDetail(tr, j.id));
       body.appendChild(tr);
@@ -562,7 +751,7 @@ function createJobsView(scope, geo, ids) {
     document.getElementById(ids.progress).textContent = progressNote();
   }
 
-  return { load, render, prefetchDetails, prefetchPrices };
+  return { load, render, prefetchDetails, prefetchPrices, stats, topPayouts, securityBreakdown, topCorps };
 }
 
 const NewEdenJobsView = createJobsView("main", GeoMain, jobIds("main"));

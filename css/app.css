@@ -60,7 +60,27 @@
   --font-mono: "IBM Plex Mono", "Consolas", monospace;
 }
 
+/* Same roles, re-tuned for a light background — darker accents throughout
+   since the mid-tones above only clear WCAG AA against the dark panels. */
+:root[data-theme="light"] {
+  --bg: #F2F4F6;
+  --panel: #FFFFFF;
+  --panel-2: #E8EBEE;
+  --line: #D3D8DD;
+  --text: #1A2027;
+  --muted: #5B6570;
+  --caldari: #2E5E8C;
+  --danger: #B23A2C;
+  --good: #1D7A5C;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Always reserve the scrollbar gutter — without this, switching between
+   boards/tabs whose content is sometimes taller than the viewport and
+   sometimes not makes the whole page shift sideways by the scrollbar's
+   width every time it appears or disappears. */
+html { scrollbar-gutter: stable; }
 
 body {
   background: var(--bg);
@@ -103,6 +123,7 @@ header {
   font-size: 12px;
   padding: 6px 14px;
   cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
 }
 .btn:hover { border-color: var(--muted); }
 .btn.active-mode { border-color: var(--caldari); color: var(--caldari); }
@@ -132,6 +153,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   text-decoration: none;
   border-bottom: 2px solid transparent;
   padding: 8px 14px;
+  transition: color 150ms ease, border-color 150ms ease;
 }
 .board-nav a:hover { color: var(--text); }
 .board-nav a.active { color: var(--text); border-bottom-color: var(--caldari); }
@@ -151,6 +173,106 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 }
 .section-title:first-child { margin-top: 0; }
 .section-title::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* ---------- Dashboard ---------- */
+.dash-ticker {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 32px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+/* The one number on the page most worth noticing first. */
+.dash-ticker-isk { font-size: 20px; font-weight: 500; color: var(--text); }
+
+.deals-list { display: flex; flex-direction: column; margin-bottom: 32px; }
+.deal-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.deal-row:hover { border-color: var(--muted); background: var(--panel-2); }
+.deal-name { flex: 1; font-size: 14px; min-width: 0; }
+.deal-name .sub { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.deal-reward { font-size: 14px; white-space: nowrap; }
+.dash-deals-empty { color: var(--muted); font-family: var(--font-mono); font-size: 13px; padding: 4px 0 12px; }
+.deal-expand {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0 16px;
+  margin: -8px 0 0;
+  transition: max-height 200ms ease, opacity 200ms ease, padding 200ms ease, margin 200ms ease;
+}
+.deal-expand.open { max-height: 120px; opacity: 1; padding: 10px 16px; margin: -4px 0 8px; }
+.deal-expand b { color: var(--text); font-weight: 500; }
+
+.dash-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+@media (max-width: 700px) {
+  .dash-two-col { grid-template-columns: 1fr; gap: 0; }
+}
+
+.secbar { display: flex; height: 30px; border-radius: 5px; overflow: hidden; border: 1px solid var(--line); margin-bottom: 10px; }
+.secbar div { display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; font-weight: 500; }
+.sec-hs { background: #2E5B3E; color: #8FE0A8; }
+.sec-ls { background: #5C4A1E; color: #F0C567; }
+.sec-ns { background: #5C2A26; color: #F09188; }
+.seclegend { display: flex; gap: 20px; font-size: 12px; color: var(--muted); font-family: var(--font-mono); margin-bottom: 32px; }
+.seclegend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.leg-hs::before { background: #8FE0A8; }
+.leg-ls::before { background: #F0C567; }
+.leg-ns::before { background: #F09188; }
+
+.corps-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 32px; }
+.corp-row { display: flex; align-items: center; gap: 12px; padding: 9px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; font-size: 13px; }
+.corp-row .rank { color: var(--muted); width: 16px; font-size: 12px; }
+.corp-row .cname { flex: 1; }
+.corp-row .bar { height: 6px; background: var(--caldari); border-radius: 3px; opacity: 0.55; transition: width 300ms ease; }
+.corp-row .count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+.board-split { display: flex; flex-direction: column; gap: 10px; }
+.board-split-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 150ms ease;
+}
+.board-split-row:hover { border-color: var(--muted); }
+
+/* ---------- Skeleton loading placeholders ---------- */
+@keyframes skeleton-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.7; } }
+.skeleton { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; animation: skeleton-pulse 1.4s ease-in-out infinite; }
+.skeleton-row { height: 46px; margin-bottom: 8px; }
+.skeleton-bar { height: 30px; margin-bottom: 10px; }
+.board-split-row span:first-child {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex: 1;
+}
+.board-split-row .mono { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
 
 /* ---------- Toolbar ---------- */
 .toolbar {
@@ -178,7 +300,11 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   font-family: var(--font-mono);
   font-size: 13px;
   padding: 6px 10px;
+  transition: border-color 150ms ease;
 }
+.toolbar select:hover,
+.toolbar input[type="text"]:hover,
+.toolbar input[type="number"]:hover { border-color: var(--muted); }
 .toolbar input[type="text"] { width: 180px; }
 .toolbar input[type="number"] { width: 90px; }
 .checkbox-label {
@@ -233,10 +359,12 @@ thead th {
 }
 tbody td { padding: 9px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
 tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background-color 150ms ease; }
 tbody tr:hover { background: var(--panel-2); }
 
 td.mono { font-family: var(--font-mono); font-size: 13px; }
 td .sub { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
+td .sub.soon { color: var(--danger); font-weight: 600; }
 
 .vp-bar {
   position: relative;
@@ -295,8 +423,9 @@ td .sub { display: block; font-size: 11px; color: var(--muted); margin-top: 3px;
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
+  transition: color 150ms ease;
 }
-.faq-item summary:hover { color: #fff; }
+.faq-item summary:hover { color: var(--caldari); }
 .faq-item p {
   margin-top: 10px;
   font-size: 14px;
@@ -330,7 +459,7 @@ footer {
   line-height: 1.7;
 }
 footer .mono { font-family: var(--font-mono); }
-footer a { color: var(--muted); }
+footer a { color: var(--muted); transition: color 150ms ease; }
 footer a:hover { color: var(--text); }
 .footer-family a { margin-right: 12px; }
 

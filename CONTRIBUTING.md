@@ -2,7 +2,7 @@
 
 ## What helps most
 
-- **Bug reports** with the page (New Eden / Exordium), what you expected, and what happened
+- **Bug reports** with the page (Dashboard / New Eden / Exordium), what you expected, and what happened
 - **Data corrections** (wrong market hub, wrong job type mapping) with a source
 - **Reference market suggestions**: if there's a better-established hub than what's hardcoded in `js/config.js` (`MARKETS`), open an issue with a source
 
@@ -17,5 +17,6 @@
 
 ```
 python -m http.server 8090                          # serve the repo root
+python tools/build_pages.py                          # after editing index.html
 python tools/build_static_data.py <sde-jsonl-zip>    # after an SDE release
 ```

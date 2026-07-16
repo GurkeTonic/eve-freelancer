@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Generate the board subpages and sitemap.xml from index.html.
 
-index.html is the source template (the New Eden board). Every other board
-gets a real subpage directory (/exordium/, /faq/) so each has its own URL,
-survives reloads, and is indexable with its own title and description. Run
-after every change to index.html:
+index.html is the source template (the dashboard). Every other board gets a
+real subpage directory (/new-eden/, /exordium/, /faq/) so each has its own
+URL, survives reloads, and is indexable with its own title and description.
+Run after every change to index.html:
 
   python tools/build_pages.py
 
@@ -23,14 +23,21 @@ CONFIG_JS = ROOT / "js" / "config.js"
 BASE_URL = "https://freelancer.tonicbeacon.com"
 
 ROOT_PAGE = {
-    "tab": "main",
+    "tab": "dashboard",
     "dir": "",
     "title": "Freelance Jobs Board — EVE Online",
-    "description": "Public EVE Online freelance jobs board: sort by payout, filter by type/region, "
-                   "check payout vs. market value, browse open tasks New Eden-wide.",
+    "description": "Live overview of EVE Online's Freelance Jobs: total ISK offered, active job count, "
+                   "and new listings since your last visit, across New Eden and Exordium.",
 }
 
 PAGES = [
+    {
+        "tab": "new-eden",
+        "dir": "new-eden",
+        "title": "Freelance Jobs Board — New Eden",
+        "description": "Public EVE Online freelance jobs board: sort by payout, filter by type/region, "
+                       "check payout vs. market value, browse open tasks New Eden-wide.",
+    },
     {
         "tab": "exordium",
         "dir": "exordium",
@@ -76,10 +83,10 @@ def build_page(template, page):
         f'<meta property="og:url" content="{BASE_URL}/{page["dir"]}/">',
         html, count=1,
     )
-    html = html.replace('<body data-tab="main">', f'<body data-tab="{page["tab"]}">', 1)
+    html = html.replace('<body data-tab="dashboard">', f'<body data-tab="{page["tab"]}">', 1)
     html = html.replace(
         "<!-- Source template. After editing, run: python tools/build_pages.py\n"
-        "     to regenerate the subpages (exordium/, faq/) and sitemap.xml. -->",
+        "     to regenerate the subpages (new-eden/, exordium/, faq/) and sitemap.xml. -->",
         "<!-- Generated from index.html by tools/build_pages.py — do not edit by hand. -->",
         1,
     )
@@ -130,7 +137,7 @@ def main():
     sync_config_js()
 
     template = TEMPLATE.read_text(encoding="utf-8")
-    for marker in ('<body data-tab="main">', "<title>", 'rel="canonical"'):
+    for marker in ('<body data-tab="dashboard">', "<title>", 'rel="canonical"'):
         if marker not in template:
             sys.exit(f"template marker missing: {marker}")
 

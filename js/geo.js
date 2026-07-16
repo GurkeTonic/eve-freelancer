@@ -39,6 +39,21 @@ function createGeo(scope) {
     return SDATA.regions[systemId] || null;
   }
 
+  /* True security status, or null if unknown (e.g. a broadcast location
+     that isn't a solar system). Standard EVE thresholds: >=0.5 highsec,
+     >0 lowsec, <=0 nullsec. */
+  function secOf(systemId) {
+    const sec = SDATA.sec[systemId];
+    return typeof sec === "number" ? sec : null;
+  }
+
+  function secClass(sec) {
+    if (sec === null) return null;
+    if (sec >= 0.5) return "hs";
+    if (sec > 0) return "ls";
+    return "ns";
+  }
+
   /* Breadth-first search over the full k-space stargate graph. */
   function jumpsFrom(originId) {
     if (!originId || !SDATA.graph[originId]) return null;
@@ -59,7 +74,7 @@ function createGeo(scope) {
     return dist;
   }
 
-  return { searchSystems, systemIdByName, regionOf, jumpsFrom };
+  return { searchSystems, systemIdByName, regionOf, secOf, secClass, jumpsFrom };
 }
 
 const GeoMain = createGeo("main");
