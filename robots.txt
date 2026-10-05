@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /legal/
 
-Sitemap: https://capsuleerjobs.com/sitemap.xml
+Sitemap: https://freelancer.tonicdock.com/sitemap.xml
