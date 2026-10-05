@@ -4,7 +4,7 @@
 const STRINGS = {
   site_title: "Freelance Jobs Board",
   subtitle: "Public jobs board for EVE Online — sortable and filterable, New Eden and Exordium",
-  nav_dashboard: "Dashboard",
+  nav_dashboard: "Overview",
   nav_new_eden: "New Eden",
   nav_exordium: "Exordium",
   nav_faq: "FAQ",
@@ -13,23 +13,23 @@ const STRINGS = {
   theme_light: "Light mode",
   theme_dark: "Dark mode",
   dash_ticker_active: "active jobs",
-  dash_ticker_isk: "ISK on offer right now",
-  dash_ticker_below: "pay below market value",
-  dash_deals_title: "Top payouts right now",
+  dash_ticker_isk: "on offer right now",
+  dash_ticker_below: "of priced jobs pay below market",
+  dash_deals_title: "Best paid right now",
   dash_sec_title: "Where the work is",
   dash_sec_hs: "Highsec",
   dash_sec_ls: "Lowsec",
   dash_sec_ns: "Nullsec",
   dash_corps_title: "Who's hiring",
-  dash_jobs_count: "{count} jobs",
-  dash_board_split: "By board",
+  dash_jobs_count: "{count}",
+  dash_board_split: "Boards",
   dash_pending: "…",
   err_prefix: "ESI request failed: ",
   err_hint: "Check your internet connection and reload the page in a few minutes.",
   err_rate_limit: "ESI rate limit reached. Wait a moment, then try again.",
   auto_refresh: "Auto refresh",
   auto_refresh_title: "Reload every 5 minutes",
-  ts_label: "As of",
+  ts_label: "Data from",
   jobs_filter_type: "Type",
   jobs_type_all: "All types",
   jobs_filter_region: "Region",
@@ -48,10 +48,21 @@ const STRINGS = {
   sort_name_asc: "Name (A–Z)",
   sort_distance_asc: "Distance (near → far)",
   sort_expires_asc: "Expiring soonest",
-  jobs_hide_bad: "Hide jobs below market value",
-  jobs_reset: "Reset filters",
+  jobs_hide_bad: "Hide jobs that pay below market",
+  jobs_reset: "Reset",
+  filters: "Filters",
   expires_short: "expires {date}",
-  jobs_count: "{shown} of {total} jobs",
+  jobs_count: "{shown} jobs",
+  jobs_count_of: "of {total}",
+  jobs_more: "Show {n} more",
+  jobs_reward_range: "Reward per contribution, M ISK",
+  jobs_distance: "Distance",
+  jobs_value_check: "Value check",
+  loc_structure: "Player structure",
+  loc_structures: "{n} player structures",
+  loc_none: "No location given",
+  loc_deliver: "Deliver to",
+  job_progress: "Progress",
   jobs_none: "No jobs found.",
   th_job: "Job",
   th_location: "Location",
@@ -59,7 +70,8 @@ const STRINGS = {
   th_region: "Region(s)",
   th_progress: "Progress",
   th_reward_rem: "Reward (per contribution)",
-  th_value: "Value vs. market",
+  th_reward: "Reward",
+  th_value: "Value",
   th_expires: "Expires",
   th_state: "State",
   job_career: "Career",
@@ -98,9 +110,32 @@ function fmtIsk(n) {
   return v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
 
+/* "in 3 d", "in 5 h", "in 40 min" — the expiry column is read as a
+   countdown, not as a date. The full date sits in the title. */
+function fmtLeft(iso) {
+  if (!iso) return "—";
+  const ms = Date.parse(iso) - Date.now();
+  if (ms <= 0) return "expired";
+  const h = ms / 3.6e6;
+  if (h < 1) return `${Math.max(1, Math.round(ms / 6e4))} min`;
+  if (h < 48) return `${Math.round(h)} h`;
+  return `${Math.round(h / 24)} d`;
+}
+
 function fmtDate(iso) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-US");
+  return new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC";
+}
+
+/* Job texts are written in the game client and keep its markup: <font
+   size=… color=…>, <a href="joinChannel:…">, <br>. Only the words are kept.
+   The result still goes through esc() before it reaches the page. */
+function eveText(value) {
+  return String(value ?? "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&amp;/g, "&")
+    .replace(/[ \t]+\n/g, "\n").trim();
 }
 
 /* Escape untrusted strings (player-authored names, descriptions) for innerHTML. */

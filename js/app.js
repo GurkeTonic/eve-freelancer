@@ -25,69 +25,37 @@ const FaqView = {
    their own tab is opened afterward (see jobs.js's `hasLoaded` guard). */
 const DashboardView = (() => {
   const $ = (id) => document.getElementById(id);
-  const TOP_N = 8;
+  const TOP_N = 12;
 
   async function load(force = false) {
     await Promise.all([NewEdenJobsView.load(force), ExordiumJobsView.load(force)]);
   }
 
-  function dealValueHtml(ratio) {
-    if (ratio == null) return `<span class="status-pill dim">—</span>`;
-    const cls = ratio < 0.9 ? "hot" : ratio > 1.1 ? "good" : "dim";
-    return `<span class="status-pill ${cls}">${Math.round(ratio * 100)}%</span>`;
-  }
-
-  function dealExpandHtml(d) {
-    const progress = d.progress ? `${fmtNum(d.progress.current)} / ${fmtNum(d.progress.desired)}` : "—";
-    return `
-      <div class="deal-expand">
-        <b>${t("th_location")}:</b> ${d.locationName ? esc(d.locationName) : "—"}
-        &middot; <b>${t("th_progress")}:</b> ${progress}
-        &middot; <b>${t("th_expires")}:</b> ${fmtDate(d.expires)}<br>
-        <b>${t("job_creator")}:</b> ${d.creatorName ? esc(d.creatorName) : "—"}
-      </div>
-    `;
-  }
-
-  /* Rows expand in place (full location/progress/expiry/creator) instead of
-     linking off to the general board page — a click should answer "what is
-     this job", not just relocate you. Bound once on the container; survives
-     every re-render since only its children (not the container itself) are
-     replaced. */
-  function bindDealsClickOnce() {
-    const list = $("dash-deals");
-    if (list.dataset.bound) return;
-    list.dataset.bound = "1";
-    list.addEventListener("click", (e) => {
-      const row = e.target.closest(".deal-row");
-      if (!row) return;
-      const expand = row.nextElementSibling;
-      if (expand && expand.classList.contains("deal-expand")) expand.classList.toggle("open");
-    });
-  }
-
-  function skeletonRows(n, cls) {
-    return Array.from({ length: n }, () => `<div class="skeleton ${cls}"></div>`).join("");
-  }
-
+  /* The best paid jobs of both boards in one table, built from the same
+     cells as the boards. A click opens the detail in place. */
   function renderDeals(deals) {
-    bindDealsClickOnce();
-    const list = $("dash-deals");
+    const body = $("dash-deals");
     if (deals.length === 0) {
-      list.innerHTML = skeletonRows(TOP_N, "skeleton-row");
+      body.innerHTML = Array.from({ length: TOP_N }, () => `<tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr>`).join("");
       return;
     }
-    list.innerHTML = deals.map(d => {
-      const sub = d.method ? `${d.boardLabel} · ${esc(jobMethodLabel(d.method))}` : d.boardLabel;
-      return `
-        <div class="deal-row">
-          <span class="deal-name">${esc(d.name)}<span class="sub">${sub}</span></span>
-          <span class="deal-reward mono">${fmtIsk(d.reward)} ISK</span>
-          ${dealValueHtml(d.ratio)}
-        </div>
-        ${dealExpandHtml(d)}
-      `;
-    }).join("");
+    body.innerHTML = deals.map(d => `<tr class="job-row" data-id="${esc(d.id)}" data-board="${d.board}" tabindex="0">${d.html}</tr>`).join("");
+    if (!body.dataset.bound) {
+      body.dataset.bound = "1";
+      body.addEventListener("click", (e) => {
+        const row = e.target.closest("tr.job-row");
+        if (!row) return;
+        const view = row.dataset.board === "exordium" ? ExordiumJobsView : NewEdenJobsView;
+        view.toggleDetail(row, row.dataset.id);
+      });
+      body.addEventListener("keydown", (e) => {
+        const row = e.target.closest("tr.job-row");
+        if (!row || (e.key !== "Enter" && e.key !== " ")) return;
+        e.preventDefault();
+        const view = row.dataset.board === "exordium" ? ExordiumJobsView : NewEdenJobsView;
+        view.toggleDetail(row, row.dataset.id);
+      });
+    }
   }
 
   function renderSecurity(counts) {
@@ -95,39 +63,32 @@ const DashboardView = (() => {
     const legend = $("dash-seclegend");
     const total = counts.hs + counts.ls + counts.ns;
     if (total === 0) {
-      bar.innerHTML = `<div class="skeleton skeleton-bar" style="flex:1;margin:0"></div>`;
+      bar.innerHTML = "";
       legend.innerHTML = "";
       return;
     }
-    bar.innerHTML = ["hs", "ls", "ns"].map(cls => {
-      const pct = Math.round((counts[cls] / total) * 100);
-      if (pct <= 0) return "";
-      /* A narrow sliver can't fit its own "N%" label without overlapping the
-         next segment — drop the label below a threshold, keep the tooltip. */
-      const label = pct >= 8 ? `${pct}%` : "";
-      return `<div class="sec-${cls}" style="flex:${counts[cls]}" title="${pct}%">${label}</div>`;
-    }).join("");
-    legend.innerHTML = `
-      <span class="leg-hs">${t("dash_sec_hs")}</span>
-      <span class="leg-ls">${t("dash_sec_ls")}</span>
-      <span class="leg-ns">${t("dash_sec_ns")}</span>
-    `;
+    bar.innerHTML = ["hs", "ls", "ns"].map(cls =>
+      counts[cls] > 0 ? `<span class="sec-${cls}" style="flex:${counts[cls]}"></span>` : ""
+    ).join("");
+    const colour = { hs: "var(--hs)", ls: "var(--ls)", ns: "var(--ns)" };
+    legend.innerHTML = ["hs", "ls", "ns"].map(cls =>
+      `<span><i style="background:${colour[cls]}"></i>${t("dash_sec_" + cls)}<b>${Math.round((counts[cls] / total) * 100)}%</b></span>`
+    ).join("");
   }
 
   function renderCorps(corps) {
     const list = $("dash-corps");
     if (corps.length === 0) {
-      list.innerHTML = skeletonRows(5, "skeleton-row");
+      list.innerHTML = "";
       return;
     }
     const max = corps[0].count;
-    list.innerHTML = corps.map((c, i) => `
-      <div class="corp-row">
-        <span class="rank mono">${i + 1}</span>
+    list.innerHTML = corps.map(c => `
+      <li>
         <span class="cname">${esc(c.name)}</span>
-        <span class="bar" style="width:${Math.max(8, Math.round((c.count / max) * 120))}px"></span>
-        <span class="count mono">${t("dash_jobs_count", { count: c.count })}</span>
-      </div>
+        <span><span class="bar" style="display:block;width:${Math.max(6, Math.round((c.count / max) * 100))}%"></span></span>
+        <span class="n">${fmtNum(c.count)}</span>
+      </li>
     `).join("");
   }
 
@@ -148,8 +109,8 @@ const DashboardView = (() => {
     $("dash-below").textContent = priceableCount > 0 ? Math.round((belowMarketCount / priceableCount) * 100) + "%" : t("dash_pending");
 
     const deals = [
-      ...NewEdenJobsView.topPayouts(TOP_N).map(j => ({ ...j, boardLabel: t("nav_new_eden") })),
-      ...ExordiumJobsView.topPayouts(TOP_N, mainIds).map(j => ({ ...j, boardLabel: t("nav_exordium") }))
+      ...NewEdenJobsView.topPayouts(TOP_N).map(j => ({ ...j, board: "main" })),
+      ...ExordiumJobsView.topPayouts(TOP_N, mainIds).map(j => ({ ...j, board: "exordium" }))
     ].sort((a, b) => b.reward - a.reward).slice(0, TOP_N);
     renderDeals(deals);
 
@@ -168,7 +129,7 @@ const DashboardView = (() => {
     const topCorps = [...corpCounts.entries()]
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+      .slice(0, 8);
     renderCorps(topCorps);
 
     const exo = ExordiumJobsView.stats();
@@ -212,7 +173,7 @@ const App = (() => {
 
   function renderTimestamp() {
     if (!lastUpdated) return;
-    $("timestamp").textContent = t("ts_label") + " " + lastUpdated.toLocaleTimeString("en-US");
+    $("timestamp").textContent = t("ts_label") + " " + lastUpdated.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
   }
 
   function showPanel(tabId) {
@@ -279,17 +240,23 @@ const App = (() => {
     }
   }
 
-  /* Button label names what clicking switches *to*, not the current state —
-     "Light mode" while dark is active, "Dark mode" once light is active. */
+  /* No stored choice follows the system, like the Almanach. The button
+     names what clicking switches *to*. */
+  const systemLight = () => window.matchMedia("(prefers-color-scheme: light)").matches;
+  function currentTheme() {
+    return document.documentElement.dataset.theme || (systemLight() ? "light" : "dark");
+  }
   function setTheme(theme) {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem("fjb_theme", theme);
-    $("theme-toggle").textContent = theme === "dark" ? t("theme_light") : t("theme_dark");
+    if (theme) {
+      document.documentElement.dataset.theme = theme;
+      localStorage.setItem("fjb_theme", theme);
+    }
+    $("theme-toggle").textContent = currentTheme() === "dark" ? t("theme_light") : t("theme_dark");
   }
 
   function setAutoRefresh(on) {
     localStorage.setItem("fjb_auto_refresh", on ? "1" : "0");
-    $("auto-refresh").classList.toggle("active-mode", on);
+    $("auto-refresh").setAttribute("aria-pressed", String(on));
     if (autoTimer) clearInterval(autoTimer);
     autoTimer = on
       ? setInterval(() => {
@@ -300,6 +267,15 @@ const App = (() => {
   }
 
   function init() {
+    /* On a phone the filters sit behind a button, or they would fill the
+       whole first screen before a single job shows. */
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".filters-toggle");
+      if (!btn) return;
+      const open = btn.closest(".board").classList.toggle("show-filters");
+      btn.setAttribute("aria-expanded", String(open));
+    });
+
     $("refresh").addEventListener("click", () => {
       loaded.delete(activeTab);
       runTab(activeTab, true);
@@ -308,9 +284,9 @@ const App = (() => {
     setAutoRefresh(localStorage.getItem("fjb_auto_refresh") === "1");
 
     $("theme-toggle").addEventListener("click", () => {
-      setTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+      setTheme(currentTheme() === "light" ? "dark" : "light");
     });
-    setTheme(localStorage.getItem("fjb_theme") || "dark");
+    setTheme(localStorage.getItem("fjb_theme"));
 
     applyI18n();
     const pageTab = document.body.dataset.tab;

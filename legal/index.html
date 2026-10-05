@@ -12,20 +12,24 @@
 <link rel="stylesheet" href="../css/app.css">
 </head>
 <body>
-<div class="wrap">
+<div class="shell">
 
-  <header>
-    <div class="brand">
-      <h1>Freelance Jobs Board <span>/ Legal &amp; Privacy</span></h1>
-    </div>
+  <header class="topbar">
+    <a class="brand" href="../">
+      <span class="brand-mark">F</span>
+      <span class="brand-name">Freelancer</span>
+      <span class="brand-for">Freelance jobs in EVE Online</span>
+    </a>
+    <nav class="tabs" aria-label="Boards">
+      <a href="../">Overview</a>
+      <a href="../new-eden/">New Eden</a>
+      <a href="../exordium/">Exordium</a>
+      <a href="../faq/">FAQ</a>
+    </nav>
   </header>
 
-  <nav class="board-nav">
-    <a href="../">New Eden</a>
-    <a href="../exordium/">Exordium</a>
-    <a href="../faq/">FAQ</a>
-  </nav>
-
+  <main class="main" id="main">
+  <h1 class="legal-title">Legal &amp; privacy</h1>
   <div class="legal">
 
     <h2>Legal notice</h2>
@@ -119,16 +123,19 @@
       to the providers named in section 3.
     </p>
 
-    <p><a href="../">← Back to the board</a></p>
+    <p><a href="../">← Back to the overview</a></p>
 
   </div>
 
-  <footer>
-    <div>© CCP hf. All rights reserved. "EVE", "EVE Online", "CCP", and all related logos and images are trademarks or registered trademarks of CCP hf.</div>
-    <div>This material is used with limited permission of CCP Games. No official affiliation or endorsement by CCP Games is stated or implied.</div>
-    <div class="mono"><a href="https://github.com/GurkeTonic/Freelance-Jobs-Board" target="_blank" rel="noopener">GitHub</a></div>
+  <footer class="foot">
+    <div class="foot-col">
+      <p>© CCP hf. All rights reserved. "EVE", "EVE Online", "CCP", and all related logos and images are trademarks or registered trademarks of CCP hf. This material is used with limited permission of CCP Games. No official affiliation or endorsement by CCP Games is stated or implied.</p>
+    </div>
+    <div class="foot-col">
+      <p><a href="https://github.com/GurkeTonic/eve-freelancer">GitHub</a></p>
+    </div>
   </footer>
-
+  </main>
 </div>
 </body>
 </html>
