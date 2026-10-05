@@ -16,7 +16,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://esi.evetech.net; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'none'; form-action 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'none'; form-action 'none';">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -223,7 +223,7 @@
 
       <details class="faq-item">
         <summary>What is this?</summary>
-        <p>A public, read-only board for EVE Online's Freelance Jobs system. It fetches the public <span class="mono">/freelance-jobs</span> endpoint from CCP's ESI API directly in your browser — no login, no account, no backend. Built to fix the in-game board's biggest complaints: no sort by payout, no filtering, no way to tell if a job pays below market value.</p>
+        <p>A public, read-only board for EVE Online's Freelance Jobs system. Every 15 minutes it reads the public <span class="mono">/freelance-jobs</span> endpoint from CCP's ESI API while the site is built, and shows every active job — no login, no account, and your browser never talks to CCP. Built to fix the in-game board's biggest complaints: no sort by payout, no filtering, no way to tell if a job pays below market value.</p>
       </details>
 
       <details class="faq-item">
@@ -253,7 +253,7 @@
 
       <details class="faq-item">
         <summary>What does the "Value vs. market" percentage mean?</summary>
-        <p>For jobs that deliver or mine exactly one concrete item/ore type, the board fetches that type's best buy order at your selected reference market and compares it to the job's reward per contribution. 100% means the job pays exactly what you'd get instant-selling the same item on the market; under 100% means the job pays worse than just selling it; over 100% means it pays better. Below 90% is flagged red, above 110% is flagged green.</p>
+        <p>For jobs that deliver or mine exactly one concrete item/ore type, the board looks up that type's best buy order at your selected reference market (refreshed at least every 2 hours) and compares it to the job's reward per contribution. 100% means the job pays exactly what you'd get instant-selling the same item on the market; under 100% means the job pays worse than just selling it; over 100% means it pays better. Below 90% is flagged red, above 110% is flagged green.</p>
       </details>
 
       <details class="faq-item">
@@ -298,7 +298,7 @@
 
       <details class="faq-item">
         <summary>How fresh is the data?</summary>
-        <p>As fresh as ESI's own cache allows — the board doesn't bypass or force-refresh past that. Click "Refresh" for a manual reload, or turn on "Auto refresh" for one every 5 minutes. The full job list loads first; job type, region, distance, and market value fill in progressively in the background right after.</p>
+        <p>Every 15 minutes the site is rebuilt from ESI: the full job list, every job's details, and buy prices at all five reference markets. The time next to the buttons shows when that snapshot was fetched. "Refresh" and "Auto refresh" (every 5 minutes) load the latest snapshot.</p>
       </details>
 
       <details class="faq-item">

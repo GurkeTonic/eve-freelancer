@@ -1,6 +1,6 @@
 # Freelance Jobs Board
 
-A public, read-only jobs board for EVE Online's Freelance Jobs system. Client-side only — no login, no backend, no tracking. Your browser talks directly to CCP's [ESI API](https://esi.evetech.net).
+A public, read-only jobs board for EVE Online's Freelance Jobs system. No login, no tracking, and your browser never talks to CCP: a GitHub Action fetches the board from CCP's [ESI API](https://esi.evetech.net) every 15 minutes (`tools/fetch_esi.py`), checks it, and publishes the site with the data as JSON files (`.github/workflows/deploy.yml`). Locally, run `python3 tools/fetch_esi.py` first.
 
 In-game, freelance jobs can't be sorted by payout, filtered by type or region, or checked against market value before you commit to one. This board fixes that.
 

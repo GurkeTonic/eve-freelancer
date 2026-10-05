@@ -260,7 +260,10 @@ const App = (() => {
       await tab.view.load(force);
       loaded.add(tabId);
       tab.view.render();
-      lastUpdated = new Date();
+      /* The board comes from the build's snapshot: show when it was
+         fetched, not when this browser loaded it. */
+      const stamp = await ESI.fetched("jobs");
+      lastUpdated = stamp ? new Date(stamp) : new Date();
       renderTimestamp();
       setStatus("idle");
       enrich(tab.view);

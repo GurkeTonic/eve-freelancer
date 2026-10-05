@@ -1,0 +1,85 @@
+name: Build and deploy
+
+# Fetches the freelance jobs board from ESI, checks it, builds the site and
+# publishes it to GitHub Pages. Until 5.10.2026 every visitor's browser made
+# about 440 ESI requests per full load; now the build does it once every 15
+# minutes, and nothing reaches the live site unless every check passed. A red
+# run leaves the previous deployment online.
+#
+# ESI serves the job list uncached (max-age=0), so 15 minutes is a trade-off
+# between freshness and load. Job details and market prices are reused from
+# the previous run when unchanged (tools/fetch_esi.py), so a normal run makes
+# only a handful of requests.
+on:
+  schedule:
+    - cron: '3,18,33,48 * * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  SITE: https://freelancer.tonicdock.com
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Previous snapshot from the live site (for reuse)
+        run: |
+          mkdir -p data/esi
+          for f in details prices meta; do
+            curl -fsS --retry 3 -o "data/esi/$f.json" "$SITE/data/esi/$f.json" || rm -f "data/esi/$f.json"
+          done
+
+      - name: ESI snapshot
+        run: python3 tools/fetch_esi.py
+
+      - name: Check data
+        run: python3 tools/check_site.py --esi --static --pages
+
+      - name: Assemble site
+        run: |
+          mkdir _site
+          git ls-files | grep -v -E '^(\.github/|tools/|.*\.md$|LICENSE$|\.gitignore$)' | xargs cp --parents -t _site
+          cp -r data _site/
+          # Cache busting: Cloudflare and browsers keep /js and /css for up to
+          # 10 minutes. Without a version in the URL a visitor could get the new
+          # HTML with old scripts right after a deploy.
+          v=${GITHUB_SHA::8}
+          find _site -name '*.html' -exec sed -i -E "s#(src|href)=\"(\.\./)?/?(js|css)/([^\"?]+)\"#\1=\"/\3/\4?v=$v\"#g" {} +
+          grep -c "?v=$v" _site/index.html
+
+      - name: Every page in a real browser
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8099 --bind 127.0.0.1 --directory _site &
+          sleep 1
+          node tools/smoke.mjs http://127.0.0.1:8099
+
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

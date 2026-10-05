@@ -7,6 +7,9 @@ is made:
 
   --static  before the SDE workflow commits js/data/staticdata.js: the file is
             there, is not truncated, and is valid JavaScript (node --check).
+  --esi     the snapshot from tools/fetch_esi.py is complete and fresh:
+            enough jobs, a detail for nearly every job, prices for all five
+            markets.
   --pages   on every push: the subpages, routes.js and sitemap.xml match what
             tools/build_pages.py generates from index.html.
 
@@ -62,7 +65,37 @@ def check_pages():
         ok("subpages, routes.js and sitemap.xml match index.html")
 
 
-modes = set(sys.argv[1:]) or {"--static", "--pages"}
+def check_esi():
+    import json
+    from datetime import datetime, timedelta, timezone
+    base = ROOT / "data" / "esi"
+    try:
+        jobs = json.loads((base / "freelance-jobs.json").read_text(encoding="utf-8"))["freelance_jobs"]
+        details = json.loads((base / "details.json").read_text(encoding="utf-8"))
+        prices = json.loads((base / "prices.json").read_text(encoding="utf-8"))
+        meta = json.loads((base / "meta.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, KeyError) as e:
+        fail(f"esi snapshot: {e}")
+        return
+    if len(jobs) < 50:
+        fail(f"freelance-jobs.json: only {len(jobs)} jobs")
+    covered = sum(1 for j in jobs if j["id"] in details)
+    if covered < len(jobs) * 0.9:
+        fail(f"details.json: only {covered} of {len(jobs)} jobs have a detail")
+    if len(prices) < 5 or not all((m.get("buy") or {}) for m in prices.values()):
+        fail(f"prices.json: {len(prices)} markets, some without prices")
+    t = datetime.fromisoformat(meta.get("jobs", "1970-01-01T00:00:00Z").replace("Z", "+00:00"))
+    if datetime.now(timezone.utc) - t > timedelta(hours=1):
+        fail(f"meta.json: job list fetched {meta.get('jobs')}, older than 1 h")
+    if not errors:
+        ok(f"esi snapshot: {len(jobs)} jobs, {covered} details, {len(prices)} markets")
+
+
+args = sys.argv[1:]
+if "--esi" in args:
+    args.remove("--esi")
+    check_esi()
+modes = set(args) or ({"--static", "--pages"} if not sys.argv[1:] else set())
 if "--static" in modes:
     check_static()
 if "--pages" in modes:

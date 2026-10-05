@@ -1,89 +1,69 @@
-/* ESI client. Depends on config.js. */
+/* ESI data, read from the snapshot under /data/esi/. Depends on config.js.
+
+   Until 5.10.2026 this module called esi.evetech.net from the visitor's
+   browser, about 440 requests per full load. The data is the same for
+   everybody, so tools/fetch_esi.py now fetches it once per build
+   (.github/workflows/deploy.yml) and this module serves the files. The
+   interface stayed the same, so js/jobs.js did not have to change:
+
+     get("/freelance-jobs")            every job in one response
+     get("/freelance-jobs/<id>")       from details.json
+     get("/markets/<region>/orders")   best buy at the reference station,
+                                       from prices.json, as one buy order
+     fetched(group)                    when a group was fetched (meta.json)
+
+   The visitor's browser no longer contacts CCP. */
 "use strict";
 
 const ESI = (() => {
   const nameCache = new Map();
-  /* Last seen values from X-Ratelimit-Remaining/-Limit (per developers.eveonline.com/docs/services/esi/rate-limiting).
-     Confirmed CORS-exposed to browser JS by a live request, not assumed. */
-  let rateRemaining = null;
-  let rateLimit = null;
+  const once = new Map();  // file -> Promise, read once per page load
 
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  /* Error with HTTP status attached, so views can special-case rate limits. */
-  function httpError(what, status, retryAfterMs) {
+  function httpError(what, status) {
     const err = new Error(`${what} -> HTTP ${status}`);
     err.status = status;
-    err.rateLimited = status === 420 || status === 429;
-    if (err.rateLimited) err.retryAfterMs = retryAfterMs ?? 5000;
+    err.rateLimited = false;
     return err;
   }
 
-  function readRateHeaders(res) {
-    const remain = res.headers.get("x-ratelimit-remaining");
-    const limit = res.headers.get("x-ratelimit-limit");
-    if (remain !== null) rateRemaining = Number(remain);
-    if (limit !== null) rateLimit = limit;
-  }
-
-  function retryAfterMs(res) {
-    const header = res.headers.get("retry-after");
-    if (!header) return undefined;
-    const secs = Number(header);
-    return Number.isFinite(secs) ? secs * 1000 : undefined;
-  }
-
-  function url(path, params = {}) {
-    const u = new URL(CONFIG.ESI_BASE + path);
-    u.searchParams.set("compatibility_date", CONFIG.COMPAT_DATE);
-    for (const [k, v] of Object.entries(params)) {
-      if (v !== undefined && v !== null && v !== "") u.searchParams.set(k, v);
-    }
-    return u.toString();
-  }
-
-  /* Proactive throttle: if the last response said we're down to a handful of
-     tokens, give the bucket a moment to refill instead of spending the last
-     few and risking a 429 (developers.eveonline.com/docs/services/esi/rate-limiting
-     asks well-behaved clients to "reduce request frequency when remaining
-     tokens approach zero" rather than just reacting to errors). */
-  async function throttleIfLow() {
-    if (rateRemaining !== null && rateRemaining <= 3) await sleep(1000);
-  }
-
-  async function get(path, params) {
-    await throttleIfLow();
-    const res = await fetch(url(path, params), {
-      headers: { "Accept": "application/json", "X-User-Agent": CONFIG.USER_AGENT }
-    });
-    readRateHeaders(res);
-    if (!res.ok) throw httpError(`GET ${path}`, res.status, retryAfterMs(res));
+  async function file(rel) {
+    const res = await fetch(`/data/esi/${rel}`, { cache: "no-cache" });
+    if (!res.ok) throw httpError(`/data/esi/${rel}`, res.status);
     return res.json();
   }
 
-  /* Resolve IDs (systems, types, characters, corporations, ...) to names. */
-  async function names(ids) {
-    const wanted = [...new Set(ids)].filter(id => Number.isFinite(id) && !nameCache.has(id));
-    for (let i = 0; i < wanted.length; i += 900) {
-      const chunk = wanted.slice(i, i + 900);
-      if (chunk.length === 0) continue;
-      await throttleIfLow();
-      const res = await fetch(url("/universe/names"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "X-User-Agent": CONFIG.USER_AGENT
-        },
-        body: JSON.stringify(chunk)
-      });
-      readRateHeaders(res);
-      if (!res.ok) throw httpError("POST /universe/names", res.status, retryAfterMs(res));
-      const data = await res.json();
-      for (const item of data) nameCache.set(item.id, item.name);
+  function cached(rel) {
+    if (!once.has(rel)) once.set(rel, file(rel).catch(err => { once.delete(rel); throw err; }));
+    return once.get(rel);
+  }
+
+  async function get(path, params = {}) {
+    if (path === "/freelance-jobs") {
+      // A refresh (force) must see the new list, so this one is not cached.
+      once.delete("details.json");
+      once.delete("prices.json");
+      return file("freelance-jobs.json");
     }
+    const job = path.match(/^\/freelance-jobs\/([^/]+)$/);
+    if (job) {
+      const all = await cached("details.json");
+      if (!all[job[1]]) throw httpError(`GET ${path}`, 404);
+      return all[job[1]];
+    }
+    const market = path.match(/^\/markets\/(\d+)\/orders$/);
+    if (market) {
+      const m = (await cached("prices.json"))[market[1]];
+      const buy = m?.buy?.[params.type_id];
+      return buy ? [{ location_id: m.station, is_buy_order: true, price: buy }] : [];
+    }
+    throw httpError(`GET ${path}`, 404);
+  }
+
+  async function names() {
     return nameCache;
   }
 
@@ -92,8 +72,16 @@ const ESI = (() => {
   }
 
   function rateLimitStatus() {
-    return { remaining: rateRemaining, limit: rateLimit };
+    return { remaining: null, limit: null };
   }
 
-  return { get, names, name, rateLimitStatus, sleep };
+  async function fetched(group) {
+    try {
+      return (await file("meta.json"))[group] ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  return { get, names, name, rateLimitStatus, sleep, fetched };
 })();
