@@ -11,6 +11,8 @@
      get("/markets/<region>/orders")   best buy at the reference station,
                                        from prices.json, as one buy order
      fetched(group)                    when a group was fetched (meta.json)
+     stations()                        {station_id: {name, system_id}} for
+                                       the NPC stations delivery jobs name
 
    The visitor's browser no longer contacts CCP. */
 "use strict";
@@ -46,6 +48,7 @@ const ESI = (() => {
       // A refresh (force) must see the new list, so this one is not cached.
       once.delete("details.json");
       once.delete("prices.json");
+      once.delete("stations.json");
       return file("freelance-jobs.json");
     }
     const job = path.match(/^\/freelance-jobs\/([^/]+)$/);
@@ -83,5 +86,15 @@ const ESI = (() => {
     }
   }
 
-  return { get, names, name, rateLimitStatus, sleep, fetched };
+  /* Missing or broken, the board still works — delivery jobs without a
+     broadcast location just show no place, as before 5.10.2026. */
+  async function stations() {
+    try {
+      return await cached("stations.json");
+    } catch {
+      return {};
+    }
+  }
+
+  return { get, names, name, rateLimitStatus, sleep, fetched, stations };
 })();

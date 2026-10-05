@@ -49,7 +49,7 @@ jobs:
       - name: Previous snapshot from the live site (for reuse)
         run: |
           mkdir -p data/esi
-          for f in details prices meta; do
+          for f in details prices meta stations; do
             curl -fsS --retry 3 -o "data/esi/$f.json" "$SITE/data/esi/$f.json" || rm -f "data/esi/$f.json"
           done
 

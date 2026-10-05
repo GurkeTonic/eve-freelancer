@@ -35,6 +35,10 @@ function createGeo(scope) {
     return hit ? hit.id : null;
   }
 
+  function nameOf(systemId) {
+    return SDATA.names[systemId] || null;
+  }
+
   function regionOf(systemId) {
     return SDATA.regions[systemId] || null;
   }
@@ -74,7 +78,7 @@ function createGeo(scope) {
     return dist;
   }
 
-  return { searchSystems, systemIdByName, regionOf, secOf, secClass, jumpsFrom };
+  return { searchSystems, systemIdByName, nameOf, regionOf, secOf, secClass, jumpsFrom };
 }
 
 const GeoMain = createGeo("main");

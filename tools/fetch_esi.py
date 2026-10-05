@@ -22,6 +22,11 @@ Output under data/esi/:
                        {type_id: best buy price at that station}}} for all
                        five reference markets in js/config.js MARKETS, for
                        every priceable type. Reused for PRICE_MAX_AGE_H.
+  stations.json        {station_id: {"name", "system_id"}} for every NPC
+                       station a delivery job names. Stations do not move,
+                       so known ones are kept and only new ids are asked.
+                       Player structures stay unresolved: their location
+                       needs a token.
   meta.json            when each group was fetched
 
 Stdlib only. Exit 1 if the job list cannot be fetched.
@@ -235,7 +240,45 @@ if todo:
     meta["prices"] = NOW_ISO
 print(f"prices: {len(types)} types x {len(MARKETS)} markets, {len(todo)} requests")
 
+# ---------- delivery stations: where an item has to go ----------
+
+# A delivery job names the corporation offices to deliver to. About one job
+# in eight has no broadcast location at all (76 of 383 on 5.10.2026); for a
+# delivery job the station is then the only place it is tied to. 11 of those
+# 46 named an NPC station, the rest player structures.
+
+
+def delivery_stations(d):
+    params = ((d.get("configuration") or {}).get("parameters") or {})
+    loc = (((params.get("corporation_item_delivery") or {}).get("corporation_item_delivery") or {})
+           .get("corporation_office_location") or {})
+    return [int(v) for g in (loc.get("values") or []) if g.get("value_type") == "station"
+            for v in (g.get("values") or [])]
+
+
+wanted = sorted({sid for jid, d in details.items() if jid != "_fetched" for sid in delivery_stations(d)})
+prev_stations = load_prev("stations.json")
+stations = {k: v for k, v in prev_stations.items() if int(k) in wanted}
+todo = [sid for sid in wanted if str(sid) not in stations]
+
+
+def station(sid):
+    try:
+        r = request(f"/universe/stations/{sid}")
+        return sid, {"name": r["name"], "system_id": r["system_id"]}
+    except Exception as e:
+        print(f"  station {sid}: {e}")
+        return sid, None
+
+
+with ThreadPoolExecutor(WORKERS) as pool:
+    for sid, st in pool.map(station, todo):
+        if st:
+            stations[str(sid)] = st
+sizes["stations.json"] = write("stations.json", stations)
+print(f"stations: {len(wanted)} named, {len(todo)} requests")
+
 write("meta.json", meta)
-write("files.json", ["details.json", "freelance-jobs.json", "meta.json", "prices.json"])
+write("files.json", ["details.json", "freelance-jobs.json", "meta.json", "prices.json", "stations.json"])
 print(f"data/esi: {len(jobs)} jobs, {sum(sizes.values()) // 1024} kB")
 print(ESI.summary())
