@@ -10,9 +10,19 @@ edit when the contact address, app version, or compatibility date changes.
 APP_NAME = "FreelanceJobsBoard"
 APP_VERSION = "0.1"
 CONTACT_EMAIL = "webmaster@tonicbeacon.com"
-REPO_URL = "https://github.com/GurkeTonic/Freelance-Jobs-Board"
+REPO_URL = "https://github.com/GurkeTonic/eve-freelancer"
 
 USER_AGENT = f"{APP_NAME}/{APP_VERSION} ({CONTACT_EMAIL}; +{REPO_URL})"
 
 ESI_BASE = "https://esi.evetech.net"
 COMPAT_DATE = "2026-06-09"
+
+
+def client():
+    """The shared ESI client (tools/esi_client.py) with this project's
+    identification. Its cache sits in .esi-cache/ and is carried between
+    workflow runs by actions/cache."""
+    from pathlib import Path
+    from esi_client import Client
+    root = Path(__file__).resolve().parent.parent
+    return Client(ESI_BASE, COMPAT_DATE, USER_AGENT, root / ".esi-cache")

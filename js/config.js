@@ -2,13 +2,6 @@
 "use strict";
 
 const CONFIG = {
-  /* ESI_BASE, COMPAT_DATE, USER_AGENT are synced from tools/esi_shared.py
-     by tools/sync_config.py — edit them there, not here. */
-  ESI_BASE: "https://esi.evetech.net",
-  COMPAT_DATE: "2026-06-09",
-  /* Sent as X-User-Agent on every ESI request (browsers drop User-Agent
-     on fetch) — see developers.eveonline.com/docs/services/esi/best-practices */
-  USER_AGENT: "FreelanceJobsBoard/0.1 (webmaster@tonicbeacon.com; +https://github.com/GurkeTonic/Freelance-Jobs-Board)",
   /* ESI enforces 10 <= limit <= 100 on this endpoint. */
   JOBS_PAGE_LIMIT: 100,
   /* Safety cap on pages fetched per full load, so a runaway board can't hammer ESI forever. */

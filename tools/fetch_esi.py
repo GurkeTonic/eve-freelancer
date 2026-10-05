@@ -28,14 +28,12 @@ Stdlib only. Exit 1 if the job list cannot be fetched.
 """
 import json
 import sys
-import time
-import urllib.error
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
-from esi_shared import ESI_BASE, COMPAT_DATE, USER_AGENT
+from esi_client import Halted
+from esi_shared import client
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "esi"
@@ -44,7 +42,7 @@ PAGE_LIMIT = 100          # ESI: 10 <= limit <= 100
 MAX_PAGES = 40            # js/config.js JOBS_MAX_PAGES
 DETAIL_MAX_AGE_H = 24
 PRICE_MAX_AGE_H = 2
-WORKERS = 6
+WORKERS = 4   # parallel requests; the docs ask to spread, not burst
 
 # js/config.js MARKETS: region -> station of the reference hub
 MARKETS = {
@@ -59,25 +57,12 @@ now = datetime.now(timezone.utc)
 NOW_ISO = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+ESI = client()
+
+
 def request(path, params=None):
-    q = {"compatibility_date": COMPAT_DATE, **(params or {})}
-    url = f"{ESI_BASE}{path}?" + "&".join(f"{k}={v}" for k, v in q.items())
-    for attempt in range(3):
-        req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": USER_AGENT})
-        try:
-            with urllib.request.urlopen(req, timeout=30) as res:
-                return json.load(res)
-        except urllib.error.HTTPError as e:
-            if e.code in (420, 429) or e.code >= 500:
-                wait = int(e.headers.get("Retry-After") or 0) or 5 * (attempt + 1)
-                print(f"  {path}: HTTP {e.code}, waiting {wait}s")
-                time.sleep(min(wait, 60))
-                continue
-            raise
-        except (urllib.error.URLError, TimeoutError) as e:
-            print(f"  {path}: {e}, retrying")
-            time.sleep(5 * (attempt + 1))
-    raise RuntimeError(f"ESI {path}: gave up after 3 attempts")
+    """Through tools/esi_client.py: expires, ETag, error and rate limits."""
+    return ESI.get(path, params)
 
 
 def load_prev(name):
@@ -114,7 +99,10 @@ for _ in range(MAX_PAGES):
     params = {"limit": PAGE_LIMIT}
     if before:
         params["before"] = before
-    res = request("/freelance-jobs", params)
+    try:
+        res = request("/freelance-jobs", params)
+    except Halted as e:
+        sys.exit(f"ESI halted while reading the job list: {e}")
     chunk = [j for j in (res.get("freelance_jobs") or []) if j["id"] not in seen]
     seen.update(j["id"] for j in chunk)
     jobs += chunk
@@ -169,6 +157,8 @@ with ThreadPoolExecutor(WORKERS) as pool:
     for jid, d in pool.map(detail, todo):
         if d is not None:
             details[jid], fetched_at[jid] = d, NOW_ISO
+        elif jid in prev_details:  # ESI said stop or failed: keep the last good one
+            details[jid], fetched_at[jid] = prev_details[jid], prev_fetched.get(jid)
 # ESI keeps expired jobs in the list with state "Active" (27 of 410 on
 # 5.10.2026, the oldest expired in January). The board has no expiry filter,
 # because the browser only ever saw the newest page. Drop them here.
@@ -236,6 +226,8 @@ def best_buy(item):
 
 with ThreadPoolExecutor(WORKERS) as pool:
     for region, t, buy in pool.map(best_buy, todo):
+        if buy is None:
+            buy = ((prev_prices.get(str(region)) or {}).get("buy") or {}).get(str(t))
         if buy is not None:
             prices[str(region)]["buy"][str(t)] = buy
 sizes["prices.json"] = write("prices.json", prices)
@@ -244,4 +236,6 @@ if todo:
 print(f"prices: {len(types)} types x {len(MARKETS)} markets, {len(todo)} requests")
 
 write("meta.json", meta)
+write("files.json", ["details.json", "freelance-jobs.json", "meta.json", "prices.json"])
 print(f"data/esi: {len(jobs)} jobs, {sum(sizes.values()) // 1024} kB")
+print(ESI.summary())

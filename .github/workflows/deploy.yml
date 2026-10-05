@@ -38,6 +38,14 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
 
+      # ESI responses with their expires and ETag (tools/esi_client.py), so
+      # nothing is asked again before ESI says it may have changed.
+      - uses: actions/cache/restore@v4
+        with:
+          path: .esi-cache
+          key: esi-${{ github.run_id }}
+          restore-keys: esi-
+
       - name: Previous snapshot from the live site (for reuse)
         run: |
           mkdir -p data/esi
@@ -47,6 +55,16 @@ jobs:
 
       - name: ESI snapshot
         run: python3 tools/fetch_esi.py
+
+      - name: Keep the ESI cache for the next run
+        if: always()
+        run: python3 -c "import sys; sys.path.insert(0, 'tools'); import esi_client; esi_client.prune('.esi-cache')"
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .esi-cache
+          key: esi-${{ github.run_id }}
 
       - name: Check data
         run: python3 tools/check_site.py --esi --static --pages
