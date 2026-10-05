@@ -210,11 +210,11 @@ function createJobsView(scope, geo, ids) {
      visibleJobs() is — the raw `jobs` array is the same shared ESI list for
      every board, undifferentiated until each job's broadcast locations are
      known (see belongsToThisPage). */
-  function stats() {
+  function stats(exclude) {
     let totalReward = 0;
     let priceableCount = 0;
     let belowMarketCount = 0;
-    const scoped = jobs.filter(belongsToThisPage);
+    const scoped = scopedJobs(exclude);
 
     for (const j of scoped) {
       totalReward += j.reward?.remaining ?? 0;
@@ -261,9 +261,8 @@ function createJobsView(scope, geo, ids) {
      an abstract count. Includes the value ratio (when known) and enough
      detail (location, progress, expiry, creator) to expand inline right on
      the dashboard, so a click never dead-ends on the general board page. */
-  function topPayouts(n) {
-    return jobs
-      .filter(belongsToThisPage)
+  function topPayouts(n, exclude) {
+    return scopedJobs(exclude)
       .filter(j => j.rewardPerContribution != null)
       .map(j => {
         const loc = nearestLocation(j);
@@ -303,6 +302,18 @@ function createJobsView(scope, geo, ids) {
     return scopedLocations(job).length > 0;
   }
 
+  /* This board's jobs, minus the ids in `exclude` (a Set). A job broadcast
+     from both sides of the Exordium gap belongs to both boards, so the
+     dashboard passes New Eden's ids when it asks Exordium for its share —
+     otherwise every such job is counted twice in the totals. */
+  function scopedJobs(exclude) {
+    return jobs.filter(j => belongsToThisPage(j) && !exclude?.has(j.id));
+  }
+
+  function scopedIds() {
+    return new Set(scopedJobs().map(j => j.id));
+  }
+
   function nearestLocation(job) {
     const locs = scopedLocations(job);
     if (locs.length === 0) return null;
@@ -323,9 +334,9 @@ function createJobsView(scope, geo, ids) {
      broadcasting from five highsec stations doesn't outweigh five separate
      one-location jobs. Only counts jobs whose detail (and so broadcast
      locations) has loaded. */
-  function securityBreakdown() {
+  function securityBreakdown(exclude) {
     const counts = { hs: 0, ls: 0, ns: 0, unknown: 0 };
-    for (const j of jobs.filter(belongsToThisPage)) {
+    for (const j of scopedJobs(exclude)) {
       if (!j._detailLoaded) continue;
       const locs = scopedLocations(j);
       if (locs.length === 0) continue;
@@ -338,9 +349,9 @@ function createJobsView(scope, geo, ids) {
   /* Top N corporations by number of active jobs posted, for the "who's
      hiring" list. Only counts jobs whose detail (and so creator) has
      loaded. */
-  function topCorps(n) {
+  function topCorps(n, exclude) {
     const counts = new Map();
-    for (const j of jobs.filter(belongsToThisPage)) {
+    for (const j of scopedJobs(exclude)) {
       const name = j.creator?.corporation?.name;
       if (!name) continue;
       counts.set(name, (counts.get(name) ?? 0) + 1);
@@ -751,7 +762,7 @@ function createJobsView(scope, geo, ids) {
     document.getElementById(ids.progress).textContent = progressNote();
   }
 
-  return { load, render, prefetchDetails, prefetchPrices, stats, topPayouts, securityBreakdown, topCorps };
+  return { load, render, prefetchDetails, prefetchPrices, stats, scopedIds, topPayouts, securityBreakdown, topCorps };
 }
 
 const NewEdenJobsView = createJobsView("main", GeoMain, jobIds("main"));

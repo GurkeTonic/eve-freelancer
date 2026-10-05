@@ -132,23 +132,29 @@ const DashboardView = (() => {
   }
 
   function render() {
+    /* The totals count every job once. A job broadcast from both sides of
+       the Exordium gap appears on both boards (31 of 383 on 5.10.2026), so
+       Exordium only contributes the jobs New Eden doesn't already have.
+       The two board cards below keep their own full counts — that is what
+       each board shows. */
+    const mainIds = NewEdenJobsView.scopedIds();
     const main = NewEdenJobsView.stats();
-    const exo = ExordiumJobsView.stats();
+    const exoOnly = ExordiumJobsView.stats(mainIds);
 
-    const priceableCount = main.priceableCount + exo.priceableCount;
-    const belowMarketCount = main.belowMarketCount + exo.belowMarketCount;
-    $("dash-active").textContent = fmtNum(main.count + exo.count);
-    $("dash-isk").textContent = fmtIsk(main.totalReward + exo.totalReward) + " ISK";
+    const priceableCount = main.priceableCount + exoOnly.priceableCount;
+    const belowMarketCount = main.belowMarketCount + exoOnly.belowMarketCount;
+    $("dash-active").textContent = fmtNum(main.count + exoOnly.count);
+    $("dash-isk").textContent = fmtIsk(main.totalReward + exoOnly.totalReward) + " ISK";
     $("dash-below").textContent = priceableCount > 0 ? Math.round((belowMarketCount / priceableCount) * 100) + "%" : t("dash_pending");
 
     const deals = [
       ...NewEdenJobsView.topPayouts(TOP_N).map(j => ({ ...j, boardLabel: t("nav_new_eden") })),
-      ...ExordiumJobsView.topPayouts(TOP_N).map(j => ({ ...j, boardLabel: t("nav_exordium") }))
+      ...ExordiumJobsView.topPayouts(TOP_N, mainIds).map(j => ({ ...j, boardLabel: t("nav_exordium") }))
     ].sort((a, b) => b.reward - a.reward).slice(0, TOP_N);
     renderDeals(deals);
 
     const secMain = NewEdenJobsView.securityBreakdown();
-    const secExo = ExordiumJobsView.securityBreakdown();
+    const secExo = ExordiumJobsView.securityBreakdown(mainIds);
     renderSecurity({
       hs: secMain.hs + secExo.hs,
       ls: secMain.ls + secExo.ls,
@@ -156,7 +162,7 @@ const DashboardView = (() => {
     });
 
     const corpCounts = new Map();
-    for (const c of [...NewEdenJobsView.topCorps(50), ...ExordiumJobsView.topCorps(50)]) {
+    for (const c of [...NewEdenJobsView.topCorps(50), ...ExordiumJobsView.topCorps(50, mainIds)]) {
       corpCounts.set(c.name, (corpCounts.get(c.name) ?? 0) + c.count);
     }
     const topCorps = [...corpCounts.entries()]
@@ -165,6 +171,7 @@ const DashboardView = (() => {
       .slice(0, 5);
     renderCorps(topCorps);
 
+    const exo = ExordiumJobsView.stats();
     $("dash-neweden-count").textContent = fmtNum(main.count);
     $("dash-neweden-isk").textContent = fmtIsk(main.totalReward) + " ISK";
     $("dash-exordium-count").textContent = fmtNum(exo.count);
