@@ -4,5 +4,5 @@ node_modules/
 
 # Built per run by .github/workflows/deploy.yml, published with the site.
 # Locally: python3 tools/fetch_esi.py
-data/
+/data/
 .esi-cache/
