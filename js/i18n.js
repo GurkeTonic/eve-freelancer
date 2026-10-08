@@ -60,7 +60,7 @@ const STRINGS = {
   jobs_value_check: "Value check",
   loc_structure: "Player structure",
   loc_structures: "{n} player structures",
-  loc_none: "No location given",
+  loc_none: "Not broadcast: in-game it only shows on the corporation's Show Info",
   loc_deliver: "Deliver to",
   job_progress: "Progress",
   jobs_none: "No jobs found.",
