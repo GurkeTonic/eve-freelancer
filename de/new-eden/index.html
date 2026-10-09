@@ -21,7 +21,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="color-scheme" content="light dark">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'none'; form-action 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' https://static.cloudflareinsights.com; base-uri 'none'; form-action 'none';">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -350,7 +350,7 @@
       </details>
       <details class="faq-item">
         <summary>Werden meine Besuche gezählt?</summary>
-        <p>Nein. Es gibt keine Konten und keine Cookies. Cloudflare, das diese Seite ausliefert, fügt sein Web-Analytics-Skript in die Seiten ein; die Sicherheitsrichtlinie (Content Security Policy) dieser Seite blockiert es, es läuft also nie und zählt keinen Besuch. Deine Einstellungen (Heimatsystem, Referenzmarkt, Filter, Sortierung, hell oder dunkel) bleiben im lokalen Speicher deines Browsers. Mehr dazu unter <a href="/de/legal/">Rechtliches und Datenschutz</a>.</p>
+        <p>Nur als Seitenaufrufe. Cloudflare, das diese Seite ausliefert, fügt sein Web-Analytics-Skript in die Seiten ein. Es zählt, welche Seite aufgerufen wurde, woher der Besuch kam und wie schnell die Seite lud; nach Angabe von Cloudflare ohne Cookies oder anderen Browserspeicher und ohne Besucher wiederzuerkennen. Es gibt keine Konten und kein Tracking. Deine Einstellungen (Heimatsystem, Referenzmarkt, Filter, Sortierung, hell oder dunkel) bleiben im lokalen Speicher deines Browsers. Mehr dazu unter <a href="/de/legal/">Rechtliches und Datenschutz</a>.</p>
       </details>
       <details class="faq-item">
         <summary>Gehört das zu CCP Games?</summary>
@@ -366,7 +366,7 @@
 
 <footer class="foot">
   <div class="foot-col">
-    <p data-i18n="footer_source">Daten aus CCPs öffentlicher ESI-Schnittstelle (/freelance-jobs), etwa alle 15 Minuten beim Bau der Seite abgerufen. Dein Browser spricht nur mit dieser Seite.</p>
+    <p data-i18n="footer_source">Daten aus CCPs öffentlicher ESI-Schnittstelle (/freelance-jobs), etwa alle 15 Minuten beim Bau der Seite abgerufen. Dein Browser spricht nie mit CCP.</p>
     <p><span data-i18n="legal_ccp1">© CCP hf. Alle Rechte vorbehalten. „EVE“, „EVE Online“, „CCP“ und alle zugehörigen Logos und Bilder sind Marken oder eingetragene Marken von CCP hf.</span> <span data-i18n="legal_ccp2">Dieses Material wird mit eingeschränkter Erlaubnis von CCP Games verwendet. Eine offizielle Verbindung zu CCP Games oder eine Billigung durch CCP Games besteht nicht.</span></p>
   </div>
   <div class="foot-col">

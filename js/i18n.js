@@ -105,7 +105,7 @@ const STRINGS = /*STRINGS*/{
     "err_hint": "Reload the page in a few minutes.",
     "err_rate_limit": "Too many requests. Wait a moment, then reload.",
 
-    "footer_source": "Data from CCP's public ESI interface (/freelance-jobs), fetched about every 15 minutes when the site is built. Your browser only talks to this site.",
+    "footer_source": "Data from CCP's public ESI interface (/freelance-jobs), fetched about every 15 minutes when the site is built. Your browser never talks to CCP.",
     "footer_family": "Also from this workshop:",
     "legal_ccp1": "© CCP hf. All rights reserved. \"EVE\", \"EVE Online\", \"CCP\", and all related logos and images are trademarks or registered trademarks of CCP hf.",
     "legal_ccp2": "This material is used with limited permission of CCP Games. No official affiliation or endorsement by CCP Games is stated or implied."
@@ -205,7 +205,7 @@ const STRINGS = /*STRINGS*/{
     "err_hint": "Lade die Seite in ein paar Minuten neu.",
     "err_rate_limit": "Zu viele Anfragen. Warte kurz und lade dann neu.",
 
-    "footer_source": "Daten aus CCPs öffentlicher ESI-Schnittstelle (/freelance-jobs), etwa alle 15 Minuten beim Bau der Seite abgerufen. Dein Browser spricht nur mit dieser Seite.",
+    "footer_source": "Daten aus CCPs öffentlicher ESI-Schnittstelle (/freelance-jobs), etwa alle 15 Minuten beim Bau der Seite abgerufen. Dein Browser spricht nie mit CCP.",
     "footer_family": "Aus derselben Werkstatt:",
     "legal_ccp1": "© CCP hf. Alle Rechte vorbehalten. „EVE“, „EVE Online“, „CCP“ und alle zugehörigen Logos und Bilder sind Marken oder eingetragene Marken von CCP hf.",
     "legal_ccp2": "Dieses Material wird mit eingeschränkter Erlaubnis von CCP Games verwendet. Eine offizielle Verbindung zu CCP Games oder eine Billigung durch CCP Games besteht nicht."
