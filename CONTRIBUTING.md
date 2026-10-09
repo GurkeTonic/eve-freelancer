@@ -17,6 +17,6 @@
 
 ```
 python -m http.server 8090                          # serve the repo root
-python tools/build_pages.py                          # after editing index.html
+python tools/build_pages.py                          # after editing src/ or js/i18n.js
 python tools/build_static_data.py <sde-jsonl-zip>    # after an SDE release
 ```

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<!-- Generated from src/ by tools/build_pages.py. Do not edit by hand. -->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fragen: Freelancer</title>
+<meta name="description" content="Wie das Freelancer-Brett funktioniert: Datenquelle, Abgleich mit Marktpreisen, Ort und Entfernung, die Trennung von New Eden und Exordium, Datenschutz.">
+<link rel="canonical" href="https://freelancer.tonicdock.com/de/faq/">
+<link rel="alternate" hreflang="en" href="https://freelancer.tonicdock.com/faq/">
+<link rel="alternate" hreflang="de" href="https://freelancer.tonicdock.com/de/faq/">
+<link rel="alternate" hreflang="x-default" href="https://freelancer.tonicdock.com/faq/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Fragen: Freelancer">
+<meta property="og:description" content="Wie das Freelancer-Brett funktioniert: Datenquelle, Abgleich mit Marktpreisen, Ort und Entfernung, die Trennung von New Eden und Exordium, Datenschutz.">
+<meta property="og:url" content="https://freelancer.tonicdock.com/de/faq/">
+<meta property="og:site_name" content="Freelancer">
+<meta property="og:locale" content="de_DE">
+<meta property="og:image" content="https://freelancer.tonicdock.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'none'; form-action 'none';">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body data-tab="faq">
+<a class="skip" href="#main" data-i18n="skip">Zum Inhalt</a>
+
+<header class="top">
+  <a class="mark" href="/de/"><b>Freelancer</b> <span data-i18n="site_for">Freelance-Aufträge in EVE Online</span></a>
+  <nav class="tabs" data-i18n-aria="nav_label" aria-label="Seiten">
+    <a id="tab-dashboard" href="/de/" data-i18n="nav_dashboard">Übersicht</a>
+    <a id="tab-new-eden" href="/de/new-eden/" data-i18n="nav_new_eden">New Eden</a>
+    <a id="tab-exordium" href="/de/exordium/" data-i18n="nav_exordium">Exordium</a>
+    <a id="tab-faq" class="active" aria-current="page" href="/de/faq/" data-i18n="nav_faq">Fragen</a>
+  </nav>
+  <div class="top-meta">
+    <span class="stamp" id="timestamp"></span>
+    <button class="btn btn-quiet" id="refresh" type="button" data-i18n="refresh">Neu laden</button>
+    <a class="lang" id="lang-other" href="/faq/" hreflang="en" lang="en" data-i18n="lang_other">English</a>
+  </div>
+</header>
+
+<main class="main" id="main">
+  <div class="error-box hidden" id="error" role="alert"></div>
+
+  <!-- Overview -->
+  <section id="panel-dashboard" class="overview hidden" aria-labelledby="ov-title">
+    <div class="intro">
+      <h1 id="ov-title" data-i18n="ov_title">Jeder offene Freelance-Auftrag, nach Sicherheitsstatus</h1>
+      <p class="lede" data-i18n="ov_lede">Ein Kästchen ist ein Auftrag, einsortiert nach dem System, aus dem er ausgestrahlt wird. Die bestbezahlten stehen darunter.</p>
+    </div>
+
+    <!-- The security ladder. Columns and labels are static, so the chart
+         keeps its size while the squares load; app.js fills .sq. -->
+    <figure class="ladder" id="ladder" aria-busy="true">
+      <figcaption class="vh" data-i18n="ladder_label">Offene Aufträge nach Sicherheitsstatus ihres Ausstrahlungssystems</figcaption>
+      <div class="grp" style="--n:6">
+        <ol>
+          <li data-bin="10" style="--c:var(--s10)"><span class="sq" id="bin-10" aria-hidden="true"></span><span class="lab" aria-hidden="true">1.0</span><span class="vh" id="sr-10"></span></li>
+          <li data-bin="9" style="--c:var(--s9)"><span class="sq" id="bin-9" aria-hidden="true"></span><span class="lab" aria-hidden="true">0.9</span><span class="vh" id="sr-9"></span></li>
+          <li data-bin="8" style="--c:var(--s8)"><span class="sq" id="bin-8" aria-hidden="true"></span><span class="lab" aria-hidden="true">0.8</span><span class="vh" id="sr-8"></span></li>
+          <li data-bin="7" style="--c:var(--s7)"><span class="sq" id="bin-7" aria-hidden="true"></span><span class="lab" aria-hidden="true">0.7</span><span class="vh" id="sr-7"></span></li>
+          <li data-bin="6" style="--c:var(--s6)"><span class="sq" id="bin-6" aria-hidden="true"></span><span class="lab" aria-hidden="true">0.6</span><span class="vh" id="sr-6"></span></li>
+          <li data-bin="5" style="--c:var(--s5)"><span class="sq" id="bin-5" aria-hidden="true"></span><span class="lab" aria-hidden="true">0.5</span><span class="vh" id="sr-5"></span></li>
+        </ol>
+        <p class="gname" data-i18n="g_hs">Highsec</p>
+      </div>
+      <div class="grp" style="--n:4">
+        <ol>
+          <li data-bin="4" style="--c:var(--s4)"><span class="sq" id="bin-4" aria-hidden="true"></span><span class="lab" aria-hidden="true">0.4</span><span class="vh" id="sr-4"></span></li>
+          <li data-bin="3" style="--c:var(--s3)"><span class="sq" id="bin-3" aria-hidden="true"></span><span class="lab" aria-hidden="true">0.3</span><span class="vh" id="sr-3"></span></li>
+          <li data-bin="2" style="--c:var(--s2)"><span class="sq" id="bin-2" aria-hidden="true"></span><span class="lab" aria-hidden="true">0.2</span><span class="vh" id="sr-2"></span></li>
+          <li data-bin="1" style="--c:var(--s1)"><span class="sq" id="bin-1" aria-hidden="true"></span><span class="lab" aria-hidden="true">0.1</span><span class="vh" id="sr-1"></span></li>
+        </ol>
+        <p class="gname" data-i18n="g_ls">Lowsec</p>
+      </div>
+      <div class="grp" style="--n:1">
+        <ol>
+          <li data-bin="ns" style="--c:var(--s0)"><span class="sq" id="bin-ns" aria-hidden="true"></span><span class="lab" aria-hidden="true">&le;0.0</span><span class="vh" id="sr-ns"></span></li>
+        </ol>
+        <p class="gname" data-i18n="g_ns">Nullsec</p>
+      </div>
+      <div class="grp" style="--n:1">
+        <ol>
+          <li data-bin="wh" style="--c:var(--s0)"><span class="sq" id="bin-wh" aria-hidden="true"></span><span class="lab" aria-hidden="true">&minus;1.0</span><span class="vh" id="sr-wh"></span></li>
+        </ol>
+        <p class="gname" data-i18n="g_wh">Wurmloch</p>
+      </div>
+      <div class="grp grp-none" style="--n:1">
+        <ol>
+          <li data-bin="none"><span class="sq" id="bin-none" aria-hidden="true"></span><span class="lab" aria-hidden="true">&mdash;</span><span class="vh" id="sr-none"></span></li>
+        </ol>
+        <p class="gname" data-i18n="g_none">Ohne Ort</p>
+      </div>
+    </figure>
+
+    <div class="ov-grid">
+      <div class="ov-main">
+        <h2 data-i18n="deals_title">Gerade am besten bezahlt</h2>
+        <p class="note" id="deals-note" data-i18n="deals_note_pending">Belohnung je Beitrag. „Wert“ vergleicht sie mit der besten Kauforder am Referenzmarkt.</p>
+        <div class="scroll">
+        <table class="jobs deals">
+          <thead>
+            <tr>
+              <th class="grow" data-i18n="th_job">Auftrag</th>
+              <th data-i18n="th_location">Ort</th>
+              <th class="num" data-i18n="th_reward">Belohnung</th>
+              <th class="num" data-i18n="th_value">Wert</th>
+              <th class="num" data-i18n="th_expires">Läuft ab</th>
+            </tr>
+          </thead>
+          <tbody id="dash-deals"><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="ov-side">
+        <h2 data-i18n="boards_title">Bretter</h2>
+        <ul class="boards">
+          <li><a href="/de/new-eden/"><span class="bn" data-i18n="nav_new_eden">New Eden</span><span class="bc" id="dash-neweden-count"></span></a></li>
+          <li><a href="/de/exordium/"><span class="bn" data-i18n="nav_exordium">Exordium</span><span class="bc" id="dash-exordium-count"></span></a></li>
+        </ul>
+
+        <h2 data-i18n="corps_title">Wer Aufträge vergibt</h2>
+        <ol class="corps" id="dash-corps"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- New Eden -->
+  <section id="panel-new-eden" class="board hidden" aria-labelledby="h-new-eden">
+    <aside class="filters" data-i18n-aria="filters" aria-label="Filter">
+      <div class="filters-head">
+        <h2 data-i18n="filters">Filter</h2>
+        <button class="btn btn-quiet" id="jobs-main-reset" type="button" data-i18n="jobs_reset">Filter zurücksetzen</button>
+      </div>
+
+      <label class="fblock">
+        <span class="flabel" data-i18n="jobs_filter_region">Region</span>
+        <select id="jobs-main-region"></select>
+      </label>
+
+      <fieldset class="fblock">
+        <legend data-i18n="jobs_reward_range">Belohnung je Beitrag, Mio. ISK</legend>
+        <div class="range">
+          <input id="jobs-main-min-isk" type="number" min="0" step="1" inputmode="numeric" placeholder="min" data-i18n-aria="jobs_min" aria-label="Mindestbelohnung, Mio. ISK">
+          <span class="dim" aria-hidden="true">&ndash;</span>
+          <input id="jobs-main-max-isk" type="number" min="0" step="1" inputmode="numeric" placeholder="max" data-i18n-aria="jobs_max" aria-label="Höchstbelohnung, Mio. ISK">
+        </div>
+      </fieldset>
+
+      <fieldset class="fblock">
+        <legend data-i18n="jobs_distance">Entfernung</legend>
+        <input id="jobs-main-home" type="text" list="jobs-main-home-list" data-i18n-placeholder="jobs_home_placeholder" autocomplete="off" data-i18n-aria="jobs_home" aria-label="Heimatsystem" placeholder="Dein Heimatsystem">
+        <datalist id="jobs-main-home-list"></datalist>
+        <label class="inline">
+          <span data-i18n="jobs_max_jumps">Höchstens Sprünge</span>
+          <input id="jobs-main-max-jumps" type="number" min="0" step="1" inputmode="numeric">
+        </label>
+      </fieldset>
+
+      <fieldset class="fblock">
+        <legend data-i18n="jobs_value_check">Wertprüfung</legend>
+        <select id="jobs-main-market" data-i18n-aria="jobs_market_label" aria-label="Referenzmarkt"></select>
+        <label class="check">
+          <input id="jobs-main-hide-bad" type="checkbox">
+          <span data-i18n="jobs_hide_bad">Aufträge unter Marktwert ausblenden</span>
+        </label>
+      </fieldset>
+
+      <!-- Last on purpose: its buttons arrive with the data, and nothing
+           below them can be pushed down. -->
+      <fieldset class="fblock">
+        <legend data-i18n="jobs_filter_type">Auftragsart</legend>
+        <div class="facets" id="jobs-main-type"></div>
+      </fieldset>
+    </aside>
+
+    <div class="results">
+      <div class="rbar">
+        <h1 class="board-title" id="h-new-eden" data-i18n="nav_new_eden">New Eden</h1>
+        <span class="rcount" id="jobs-main-count"></span>
+        <button class="btn filters-toggle" type="button" aria-expanded="false" data-i18n="filters">Filter</button>
+        <span class="rnote" id="jobs-main-progress"></span>
+        <label class="rsort"><span data-i18n="jobs_sort_label">Sortieren</span> <select id="jobs-main-sort"></select></label>
+      </div>
+      <div class="scroll">
+      <table class="jobs">
+        <thead>
+          <tr>
+            <th class="grow" data-i18n="th_job">Auftrag</th>
+            <th data-i18n="th_location">Ort</th>
+            <th class="num" data-i18n="th_reward">Belohnung</th>
+            <th class="num" data-i18n="th_value">Wert</th>
+            <th data-i18n="th_progress">Fortschritt</th>
+            <th class="num" data-i18n="th_expires">Läuft ab</th>
+          </tr>
+        </thead>
+        <tbody id="jobs-main-body"><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody>
+      </table>
+      </div>
+      <button class="btn more hidden" id="jobs-main-more" type="button"></button>
+    </div>
+  </section>
+
+  <!-- Exordium -->
+  <section id="panel-exordium" class="board hidden" aria-labelledby="h-exordium">
+    <aside class="filters" data-i18n-aria="filters" aria-label="Filter">
+      <div class="filters-head">
+        <h2 data-i18n="filters">Filter</h2>
+        <button class="btn btn-quiet" id="jobs-exordium-reset" type="button" data-i18n="jobs_reset">Filter zurücksetzen</button>
+      </div>
+
+      <label class="fblock">
+        <span class="flabel" data-i18n="jobs_filter_region">Region</span>
+        <select id="jobs-exordium-region"></select>
+      </label>
+
+      <fieldset class="fblock">
+        <legend data-i18n="jobs_reward_range">Belohnung je Beitrag, Mio. ISK</legend>
+        <div class="range">
+          <input id="jobs-exordium-min-isk" type="number" min="0" step="1" inputmode="numeric" placeholder="min" data-i18n-aria="jobs_min" aria-label="Mindestbelohnung, Mio. ISK">
+          <span class="dim" aria-hidden="true">&ndash;</span>
+          <input id="jobs-exordium-max-isk" type="number" min="0" step="1" inputmode="numeric" placeholder="max" data-i18n-aria="jobs_max" aria-label="Höchstbelohnung, Mio. ISK">
+        </div>
+      </fieldset>
+
+      <fieldset class="fblock">
+        <legend data-i18n="jobs_distance">Entfernung</legend>
+        <input id="jobs-exordium-home" type="text" list="jobs-exordium-home-list" data-i18n-placeholder="jobs_home_placeholder" autocomplete="off" data-i18n-aria="jobs_home" aria-label="Heimatsystem" placeholder="Dein Heimatsystem">
+        <datalist id="jobs-exordium-home-list"></datalist>
+        <label class="inline">
+          <span data-i18n="jobs_max_jumps">Höchstens Sprünge</span>
+          <input id="jobs-exordium-max-jumps" type="number" min="0" step="1" inputmode="numeric">
+        </label>
+      </fieldset>
+
+      <fieldset class="fblock">
+        <legend data-i18n="jobs_value_check">Wertprüfung</legend>
+        <select id="jobs-exordium-market" data-i18n-aria="jobs_market_label" aria-label="Referenzmarkt"></select>
+        <label class="check">
+          <input id="jobs-exordium-hide-bad" type="checkbox">
+          <span data-i18n="jobs_hide_bad">Aufträge unter Marktwert ausblenden</span>
+        </label>
+      </fieldset>
+
+      <!-- Last on purpose: its buttons arrive with the data, and nothing
+           below them can be pushed down. -->
+      <fieldset class="fblock">
+        <legend data-i18n="jobs_filter_type">Auftragsart</legend>
+        <div class="facets" id="jobs-exordium-type"></div>
+      </fieldset>
+    </aside>
+
+    <div class="results">
+      <div class="rbar">
+        <h1 class="board-title" id="h-exordium" data-i18n="nav_exordium">Exordium</h1>
+        <span class="rcount" id="jobs-exordium-count"></span>
+        <button class="btn filters-toggle" type="button" aria-expanded="false" data-i18n="filters">Filter</button>
+        <span class="rnote" id="jobs-exordium-progress"></span>
+        <label class="rsort"><span data-i18n="jobs_sort_label">Sortieren</span> <select id="jobs-exordium-sort"></select></label>
+      </div>
+      <div class="scroll">
+      <table class="jobs">
+        <thead>
+          <tr>
+            <th class="grow" data-i18n="th_job">Auftrag</th>
+            <th data-i18n="th_location">Ort</th>
+            <th class="num" data-i18n="th_reward">Belohnung</th>
+            <th class="num" data-i18n="th_value">Wert</th>
+            <th data-i18n="th_progress">Fortschritt</th>
+            <th class="num" data-i18n="th_expires">Läuft ab</th>
+          </tr>
+        </thead>
+        <tbody id="jobs-exordium-body"><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr class="skeleton-row"><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody>
+      </table>
+      </div>
+      <button class="btn more hidden" id="jobs-exordium-more" type="button"></button>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="panel-faq" class="page-faq" aria-labelledby="h-faq">
+    <h1 id="h-faq">Fragen zum Brett</h1>
+
+    <h2>Allgemein</h2>
+    <div class="faq">
+      <details class="faq-item">
+        <summary>Was ist das?</summary>
+        <p>Ein öffentliches Brett zum Lesen für die Freelance-Aufträge in EVE Online. Etwa alle 15 Minuten wird die Seite aus dem öffentlichen Endpunkt <span class="mono">/freelance-jobs</span> von CCPs ESI-Schnittstelle neu gebaut und zeigt jeden laufenden Auftrag, sortier- und filterbar. Ohne Anmeldung, ohne Konto, und dein Browser spricht nie mit CCP. Es ergänzt, was dem Fenster im Spiel fehlt: Sortieren nach Belohnung, Filter und den Abgleich mit Marktpreisen.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Was zeigt die Übersicht?</summary>
+        <p>Oben jeden offenen Auftrag als ein Kästchen, in der Spalte des Sicherheitsstatus seines Ausstrahlungssystems und in der Farbe, die der Spielclient für diesen Status nutzt. Ein Auftrag, der aus mehreren Systemen ausgestrahlt wird, zählt einmal, nach dem ersten. Darunter die bestbezahlten Aufträge beider Bretter (ein Klick auf eine Zeile zeigt die Details) und die Corporations mit den meisten Aufträgen.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Warum sind New Eden und Exordium getrennt?</summary>
+        <p>Exordium ist das neue Startgebiet. Es hängt über genau ein Tor (Manifest nach Yulai) am übrigen New Eden, und wer hindurchfliegt, kommt nicht zurück. Seine Piloten erreichen die übrigen Aufträge nie, deshalb hat jede Region ihr eigenes Brett mit denselben Filtern und eigenem Referenzmarkt.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Welche Aufträge stehen hier?</summary>
+        <p>Jeder Auftrag, den CCPs öffentliche Liste als aktiv führt. Manche davon sind schon über ihr Ablaufdatum hinaus; der Bau lässt sie weg, das Brett zeigt also nur Aufträge, die noch laufen.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Kann ich meine eigenen Aufträge sehen oder die meiner Corporation verwalten?</summary>
+        <p>Nein, und das ist nicht geplant. Dafür bräuchte es eine Anmeldung mit dem Charakter und einen Ort für das Token, also einen Server mit Datenbank. Dieses Brett ist eine statische Seite ohne beides.</p>
+      </details>
+    </div>
+
+    <h2>Belohnung und Marktwert</h2>
+    <div class="faq">
+      <details class="faq-item">
+        <summary>Was bedeutet die Spalte „Wert“?</summary>
+        <p>Bei Aufträgen, die genau einen Gegenstand oder ein Erz verlangen, vergleicht das Brett die Belohnung je Beitrag mit der besten Kauforder für diesen Typ an deinem Referenzmarkt. <span class="mono">+18&#8239;%</span> heißt: Der Auftrag zahlt 18&#8239;% mehr, als du beim Sofortverkauf dort bekämst; <span class="mono">&minus;15&#8239;%</span> heißt: weniger. Mehr als 10&#8239;% darunter gilt als unter Marktwert, mehr als 10&#8239;% darüber steht fett.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Warum steht bei manchen Aufträgen ein Strich unter „Wert“?</summary>
+        <p>Entweder verlangt der Auftrag eine ganze Gruppe („irgendein Erz der Gruppe X“), zu der kein einzelner Preis passt, oder es gibt an deinem Referenzmarkt keine Kauforder für den Gegenstand, was an kleinen Handelsplätzen am häufigsten vorkommt.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Welche Referenzmärkte gibt es?</summary>
+        <p>Für New Eden die vier großen Handelsplätze Jita, Amarr, Dodixie und Rens. Für Exordium den eigenen Handelsplatz in Manifest, das AIR Laboratories Trade Center, das CCPs Devblog für die Region nennt. Die Preise aller fünf Märkte werden bei jedem Bau abgerufen.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Was blendet „Aufträge unter Marktwert ausblenden“ aus?</summary>
+        <p>Nur Aufträge, die mehr als 10&#8239;% unter dem Marktpreis an deinem Referenzmarkt zahlen. Aufträge ohne Marktpreis bleiben stehen, denn es gibt nichts, woran man sie messen könnte.</p>
+      </details>
+    </div>
+
+    <h2>Ort und Entfernung</h2>
+    <div class="faq">
+      <details class="faq-item">
+        <summary>Was zeigt die Spalte „Ort“?</summary>
+        <p>Das System, aus dem ein Auftrag ausgestrahlt wird, seinen Sicherheitsstatus in der Farbe des Clients und die Region; mit gesetztem Heimatsystem das nächste Ausstrahlungssystem und die Sprünge dorthin. Im Spiel ist ein Auftrag bis 5 Sprünge um seine Ausstrahlungsorte sichtbar, dieses Brett zeigt alle. Wurmloch-Systeme stehen wie im Client mit &minus;1.0 da. „Lieferort“ markiert einen Lieferauftrag ohne Ausstrahlungsort, für den die NPC-Station einspringt. Ein Strich heißt: Der Auftrag wird nirgends ausgestrahlt. Er steht in keinem Opportunities-Fenster, nur in der Show Info der vergebenden Corporation.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Wie werden Sprünge gezählt?</summary>
+        <p>Per Breitensuche über die Sternentore aus CCPs Static Data Export, wie bei <a href="https://warzone.tonicdock.com">Warzone Companion</a>. Wurmlöcher und Exordiums Einbahn-Verbindung nach Yulai gehören nicht dazu, deshalb sucht jedes Brett Heimatsysteme nur auf seiner Seite.</p>
+      </details>
+    </div>
+
+    <h2>Daten und Datenschutz</h2>
+    <div class="faq">
+      <details class="faq-item">
+        <summary>Wie aktuell sind die Daten?</summary>
+        <p>Die Seite wird etwa alle 15 Minuten neu gebaut: die Auftragsliste, die Details jedes Auftrags und die Kaufpreise an allen fünf Referenzmärkten. Die Uhrzeit oben zeigt, wann diese Daten abgerufen wurden. „Neu laden“ holt den neuesten Bau, „Automatisch neu laden“ tut das alle 5 Minuten.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Werden meine Besuche gezählt?</summary>
+        <p>Nein. Es gibt keine Konten und keine Cookies. Cloudflare, das diese Seite ausliefert, fügt sein Web-Analytics-Skript in die Seiten ein; die Sicherheitsrichtlinie (Content Security Policy) dieser Seite blockiert es, es läuft also nie und zählt keinen Besuch. Deine Einstellungen (Heimatsystem, Referenzmarkt, Filter, Sortierung, hell oder dunkel) bleiben im lokalen Speicher deines Browsers. Mehr dazu unter <a href="/de/legal/">Rechtliches und Datenschutz</a>.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Gehört das zu CCP Games?</summary>
+        <p>Nein. Es ist ein inoffizielles, nicht kommerzielles Fanprojekt. „EVE“, „EVE Online“, „CCP“ und alle zugehörigen Logos und Bilder sind Marken von CCP hf., genutzt unter CCPs <a href="https://developers.eveonline.com/resource/license-agreement">Entwicklerlizenz</a>.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Wo melde ich einen Fehler?</summary>
+        <p>Das Brett begann als Reiter in <a href="https://warzone.tonicdock.com">Warzone Companion</a>. Quellcode, Fehlermeldungen und Pull Requests liegen auf <a href="https://github.com/GurkeTonic/eve-freelancer">GitHub</a>.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-col">
+    <p data-i18n="footer_source">Daten aus CCPs öffentlicher ESI-Schnittstelle (/freelance-jobs), etwa alle 15 Minuten beim Bau der Seite abgerufen. Dein Browser spricht nur mit dieser Seite.</p>
+    <p><span data-i18n="legal_ccp1">© CCP hf. Alle Rechte vorbehalten. „EVE“, „EVE Online“, „CCP“ und alle zugehörigen Logos und Bilder sind Marken oder eingetragene Marken von CCP hf.</span> <span data-i18n="legal_ccp2">Dieses Material wird mit eingeschränkter Erlaubnis von CCP Games verwendet. Eine offizielle Verbindung zu CCP Games oder eine Billigung durch CCP Games besteht nicht.</span></p>
+  </div>
+  <div class="foot-col">
+    <p><span data-i18n="footer_family">Aus derselben Werkstatt:</span> <a href="https://almanach.tonicdock.com">Almanach</a>, <a href="https://warzone.tonicdock.com">Warzone Companion</a>.</p>
+    <p><a href="https://github.com/GurkeTonic/eve-freelancer">GitHub</a>, <a href="/de/legal/" data-i18n="nav_legal">Rechtliches &amp; Datenschutz</a></p>
+    <p class="foot-prefs">
+      <button class="btn btn-quiet" id="auto-refresh" type="button" data-i18n="auto_refresh" data-i18n-title="auto_refresh_title" aria-pressed="false" title="Alle 5 Minuten den neuesten Stand laden">Automatisch neu laden</button>
+      <button class="btn btn-quiet" id="theme-toggle" type="button"></button>
+    </p>
+  </div>
+</footer>
+
+<script src="/js/data/staticdata.js"></script>
+<script src="/js/routes.js"></script>
+<script src="/js/config.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/esi.js"></script>
+<script src="/js/geo.js"></script>
+<script src="/js/jobs.js"></script>
+<script src="/js/app.js"></script>
+<script src="/js/router.js"></script>
+</body>
+</html>

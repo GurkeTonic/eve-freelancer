@@ -1,5 +1,5 @@
 /* Soft navigation between boards. Every page already ships the full app and
-   every panel (see index.html) — switching boards never needs a real
+   every panel (see src/page.html) — switching boards never needs a real
    navigation, just App.runTab() plus a history entry and updated
    title/canonical/description. Falls back to a real link for anything it
    doesn't own: external links, modified clicks, JS disabled, links whose
@@ -14,7 +14,7 @@ const Router = (() => {
   const descriptionEl = document.querySelector('meta[name="description"]');
 
   function routeFor(pathname) {
-    return ROUTES[pathname] || ROUTES["/"];
+    return ROUTES[pathname] || ROUTES[LANG === "de" ? "/de/" : "/"];
   }
 
   function applyRoute(route) {
@@ -22,6 +22,14 @@ const Router = (() => {
     canonicalEl.href = route.canonical;
     descriptionEl.content = route.description;
     document.body.dataset.tab = route.tab;
+    /* The language link and the hreflang alternates follow the board. */
+    const other = document.getElementById("lang-other");
+    if (other) other.href = route.alt;
+    const enUrl = LANG === "en" ? route.canonical : route.altCanonical;
+    const deUrl = LANG === "de" ? route.canonical : route.altCanonical;
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(l => {
+      l.href = l.hreflang === "de" ? deUrl : enUrl; // en and x-default
+    });
     App.runTab(route.tab); // also updates nav .active state (showPanel)
   }
 
@@ -34,7 +42,8 @@ const Router = (() => {
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin) return;
     const route = ROUTES[url.pathname];
-    if (!route) return;
+    /* A switch of language is a real navigation: the strings are the page's. */
+    if (!route || route.lang !== LANG) return;
 
     e.preventDefault();
     if (url.pathname === location.pathname) return;

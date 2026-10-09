@@ -7,14 +7,22 @@ for the "distance from home" jump count, region lookup, and highsec/
 lowsec/nullsec breakdown on job broadcast locations.
 
 Usage:
-  python tools/build_static_data.py <path-to-sde-jsonl-zip>
+  python tools/build_static_data.py <path-to-sde-jsonl-zip-or-directory>
+
+Security status is stored as the client shows it, not as the raw float:
+one decimal, normal rounding, except 0.0 < x < 0.05 shows 0.1 (ESI docs,
+"System Security", developers.eveonline.com/docs/guides/system-security,
+read 9.10.2026). Highsec is >= 0.5 of that value. Stored to two decimals
+before, 15 systems landed in the wrong class (0.4497 -> 0.45).
 
 Stdlib only, no network access.
 """
 import io
 import json
+import math
 import sys
 import zipfile
+from contextlib import nullcontext
 from pathlib import Path
 
 OUT_PATH = Path(__file__).resolve().parent.parent / "js" / "data" / "staticdata.js"
@@ -23,22 +31,31 @@ OUT_PATH = Path(__file__).resolve().parent.parent / "js" / "data" / "staticdata.
 KSPACE_REGION_MAX = 11000000
 
 
-def read_jsonl(zf, name):
-    with zf.open(name) as fh:
+def read_jsonl(src, name):
+    """src is an open ZipFile or a directory holding the extracted files."""
+    fh = (src / name).open("rb") if isinstance(src, Path) else src.open(name)
+    with fh:
         for line in io.TextIOWrapper(fh, encoding="utf-8"):
             line = line.strip()
             if line:
                 yield json.loads(line)
 
 
+def shown_security(x):
+    """The value the game client displays (see the module docstring)."""
+    if 0.0 < x < 0.05:
+        return 0.1
+    return math.floor(x * 10 + 0.5) / 10
+
+
 def main():
     if len(sys.argv) != 2:
-        sys.exit("usage: build_static_data.py <sde-jsonl-zip>")
+        sys.exit("usage: build_static_data.py <sde-jsonl-zip-or-directory>")
     zip_path = Path(sys.argv[1])
     if not zip_path.exists():
         sys.exit(f"SDE zip not found: {zip_path}")
 
-    with zipfile.ZipFile(zip_path) as zf:
+    with (zipfile.ZipFile(zip_path) if zip_path.is_file() else nullcontext(zip_path)) as zf:
         meta = next(read_jsonl(zf, "_sde.jsonl"))
 
         region_names = {}
@@ -52,7 +69,7 @@ def main():
             systems[s["_key"]] = {
                 "name": s["name"]["en"],
                 "region": region_names.get(s["regionID"], "?"),
-                "sec": round(s["securityStatus"], 2),
+                "sec": shown_security(s["securityStatus"]),
             }
 
         graph = {sid: [] for sid in systems}

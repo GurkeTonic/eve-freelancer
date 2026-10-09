@@ -1,6 +1,6 @@
 /* Application bootstrap. Loaded before router.js, after every view script.
    Each page (/, /new-eden/, /exordium/, /faq/) is a real subpage shipping
-   this same shell with every panel already in the DOM (see index.html) —
+   this same shell with every panel already in the DOM (see src/page.html) —
    only one is shown at a time. <body data-tab="..."> names the view the
    page shows on first load. router.js intercepts nav clicks after that and calls
    runTab() directly instead of letting the browser navigate, so board
@@ -18,14 +18,17 @@ const FaqView = {
   prefetchPrices: async () => {}
 };
 
-/* The entry point to both boards: a ranked "grab this now" list, not a
-   stats report. Loads both boards in parallel (not sequentially) so landing
-   on the dashboard first never takes longer than the slower of the two —
-   and once loaded, NewEdenJobsView/ExordiumJobsView don't re-fetch when
-   their own tab is opened afterward (see jobs.js's `hasLoaded` guard). */
+/* The entry point to both boards. On top the security ladder: every open
+   job as one square, in the column of its broadcast system's security
+   status, coloured as the game client colours that status. Below it the
+   best paid jobs and who posts them. Loads both boards in parallel, so the
+   overview never takes longer than the slower of the two, and the boards
+   don't fetch again when opened afterwards (jobs.js, `hasLoaded`). */
 const DashboardView = (() => {
   const $ = (id) => document.getElementById(id);
   const TOP_N = 12;
+  const BINS = ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1", "ns", "wh", "none"];
+  let ladderDrawn = false;
 
   async function load(force = false) {
     await Promise.all([NewEdenJobsView.load(force), ExordiumJobsView.load(force)]);
@@ -42,71 +45,95 @@ const DashboardView = (() => {
     body.innerHTML = deals.map(d => `<tr class="job-row" data-id="${esc(d.id)}" data-board="${d.board}" tabindex="0">${d.html}</tr>`).join("");
     if (!body.dataset.bound) {
       body.dataset.bound = "1";
-      body.addEventListener("click", (e) => {
-        const row = e.target.closest("tr.job-row");
-        if (!row) return;
+      const open = (row) => {
         const view = row.dataset.board === "exordium" ? ExordiumJobsView : NewEdenJobsView;
         view.toggleDetail(row, row.dataset.id);
+      };
+      body.addEventListener("click", (e) => {
+        const row = e.target.closest("tr.job-row");
+        if (row) open(row);
       });
       body.addEventListener("keydown", (e) => {
         const row = e.target.closest("tr.job-row");
         if (!row || (e.key !== "Enter" && e.key !== " ")) return;
         e.preventDefault();
-        const view = row.dataset.board === "exordium" ? ExordiumJobsView : NewEdenJobsView;
-        view.toggleDetail(row, row.dataset.id);
+        open(row);
       });
     }
   }
 
-  function renderSecurity(counts) {
-    const bar = $("dash-secbar");
-    const legend = $("dash-seclegend");
-    const total = counts.hs + counts.ls + counts.ns;
-    if (total === 0) {
-      bar.innerHTML = "";
-      legend.innerHTML = "";
-      return;
+  /* Square size: the largest that lets the fullest column fit the fixed
+     height of the chart, the same for every column so area stays count.
+     The chart's height never depends on the data, so nothing below it
+     moves when the squares arrive. */
+  function sizeLadder() {
+    const ladder = $("ladder");
+    const boxes = [...ladder.querySelectorAll(".sq")];
+    const max = Math.max(1, ...boxes.map(b => b.querySelectorAll("i").length));
+    /* Columns on a wide screen (count on its own line above the stack),
+       rows on a phone (count after the last square). */
+    const rows = getComputedStyle(ladder).getPropertyValue("--rows").trim() === "1";
+    const label = 22;
+    const W = Math.min(...boxes.map(b => rows ? b.clientWidth - 32 : b.parentElement.clientWidth));
+    const H = boxes[0].clientHeight - (rows ? 0 : label);
+    let pick = { s: 2, g: 1, per: Math.max(1, Math.floor((W + 1) / 3)) };
+    for (let s = 14; s >= 3; s--) {
+      const g = s >= 8 ? 2 : 1;
+      const per = Math.max(1, Math.floor((W + g) / (s + g)));
+      if (Math.ceil(max / per) * (s + g) - g <= H) { pick = { s, g, per }; break; }
     }
-    bar.innerHTML = ["hs", "ls", "ns"].map(cls =>
-      counts[cls] > 0 ? `<span class="sec-${cls}" style="flex:${counts[cls]}"></span>` : ""
-    ).join("");
-    const colour = { hs: "var(--hs)", ls: "var(--ls)", ns: "var(--ns)" };
-    legend.innerHTML = ["hs", "ls", "ns"].map(cls =>
-      `<span><i style="background:${colour[cls]}"></i>${t("dash_sec_" + cls)}<b>${Math.round((counts[cls] / total) * 100)}%</b></span>`
-    ).join("");
+    ladder.style.setProperty("--s", pick.s + "px");
+    ladder.style.setProperty("--g", pick.g + "px");
+    ladder.style.setProperty("--per", pick.per);
+  }
+
+  function renderLadder(counts) {
+    if (!counts) return;
+    const ladder = $("ladder");
+    const animate = !ladderDrawn && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    BINS.forEach((bin, i) => {
+      const n = counts[bin] ?? 0;
+      /* The count rides on top of its stack (wrap-reverse puts the last
+         child on the top line). */
+      $("bin-" + bin).innerHTML = "<i></i>".repeat(n) + `<b>${fmtNum(n)}</b>`;
+      const label = bin === "wh" ? t("ladder_wh", { n: fmtNum(n) })
+        : bin === "none" ? t("ladder_none", { n: fmtNum(n) })
+        : t("ladder_bin", { sec: bin === "ns" ? "\u22640.0" : fmtSec(Number(bin) / 10), n: fmtNum(n) });
+      $("sr-" + bin).textContent = label;
+      ladder.querySelector(`[data-bin="${bin}"]`).style.setProperty("--i", i);
+    });
+    sizeLadder();
+    if (!ladderDrawn) {
+      ladderDrawn = true;
+      new ResizeObserver(sizeLadder).observe(ladder);
+      if (animate) {
+        ladder.classList.add("enter");
+        setTimeout(() => ladder.classList.remove("enter"), 1400);
+      }
+    }
+    ladder.setAttribute("aria-busy", "false");
   }
 
   function renderCorps(corps) {
     const list = $("dash-corps");
-    if (corps.length === 0) {
-      list.innerHTML = "";
-      return;
-    }
-    const max = corps[0].count;
-    list.innerHTML = corps.map(c => `
-      <li>
-        <span class="cname">${esc(c.name)}</span>
-        <span><span class="bar" style="display:block;width:${Math.max(6, Math.round((c.count / max) * 100))}%"></span></span>
-        <span class="n">${fmtNum(c.count)}</span>
-      </li>
-    `).join("");
+    list.innerHTML = corps.map(c => `<li><span class="cname">${esc(c.name)}</span><span class="n">${fmtNum(c.count)}</span></li>`).join("");
   }
 
   function render() {
     /* The totals count every job once. A job broadcast from both sides of
        the Exordium gap appears on both boards (31 of 383 on 5.10.2026), so
        Exordium only contributes the jobs New Eden doesn't already have.
-       The two board cards below keep their own full counts — that is what
-       each board shows. */
+       The two board rows keep their own full counts: that is what each
+       board shows. */
     const mainIds = NewEdenJobsView.scopedIds();
     const main = NewEdenJobsView.stats();
     const exoOnly = ExordiumJobsView.stats(mainIds);
 
-    const priceableCount = main.priceableCount + exoOnly.priceableCount;
-    const belowMarketCount = main.belowMarketCount + exoOnly.belowMarketCount;
-    $("dash-active").textContent = fmtNum(main.count + exoOnly.count);
-    $("dash-isk").textContent = fmtIsk(main.totalReward + exoOnly.totalReward) + " ISK";
-    $("dash-below").textContent = priceableCount > 0 ? Math.round((belowMarketCount / priceableCount) * 100) + "%" : t("dash_pending");
+    const priceable = main.priceableCount + exoOnly.priceableCount;
+    const below = main.belowMarketCount + exoOnly.belowMarketCount;
+    $("deals-note").textContent = priceable > 0 && NewEdenJobsView.ladder()
+      ? t("deals_note", { pct: fmtPct(below / priceable) })
+      : t("deals_note_pending");
 
     const deals = [
       ...NewEdenJobsView.topPayouts(TOP_N).map(j => ({ ...j, board: "main" })),
@@ -114,29 +141,26 @@ const DashboardView = (() => {
     ].sort((a, b) => b.reward - a.reward).slice(0, TOP_N);
     renderDeals(deals);
 
-    const secMain = NewEdenJobsView.securityBreakdown();
-    const secExo = ExordiumJobsView.securityBreakdown(mainIds);
-    renderSecurity({
-      hs: secMain.hs + secExo.hs,
-      ls: secMain.ls + secExo.ls,
-      ns: secMain.ns + secExo.ns
-    });
+    const lMain = NewEdenJobsView.ladder();
+    const lExo = ExordiumJobsView.ladder(mainIds);
+    if (lMain && lExo) {
+      const sum = {};
+      for (const bin of BINS) sum[bin] = (lMain[bin] ?? 0) + (lExo[bin] ?? 0);
+      renderLadder(sum);
+    }
 
     const corpCounts = new Map();
     for (const c of [...NewEdenJobsView.topCorps(50), ...ExordiumJobsView.topCorps(50, mainIds)]) {
       corpCounts.set(c.name, (corpCounts.get(c.name) ?? 0) + c.count);
     }
-    const topCorps = [...corpCounts.entries()]
+    renderCorps([...corpCounts.entries()]
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
-    renderCorps(topCorps);
+      .slice(0, 8));
 
     const exo = ExordiumJobsView.stats();
-    $("dash-neweden-count").textContent = fmtNum(main.count);
-    $("dash-neweden-isk").textContent = fmtIsk(main.totalReward) + " ISK";
-    $("dash-exordium-count").textContent = fmtNum(exo.count);
-    $("dash-exordium-isk").textContent = fmtIsk(exo.totalReward) + " ISK";
+    $("dash-neweden-count").textContent = t("board_jobs", { n: fmtNum(main.count) });
+    $("dash-exordium-count").textContent = t("board_jobs", { n: fmtNum(exo.count) });
   }
 
   async function prefetchDetails(onProgress) {
@@ -173,13 +197,16 @@ const App = (() => {
 
   function renderTimestamp() {
     if (!lastUpdated) return;
-    $("timestamp").textContent = t("ts_label") + " " + lastUpdated.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
+    $("timestamp").textContent = t("ts_label") + " " + fmtTime(lastUpdated);
   }
 
   function showPanel(tabId) {
     for (const [id, tab] of Object.entries(TABS)) {
       $(tab.panel).classList.toggle("hidden", id !== tabId);
-      $("tab-" + id).classList.toggle("active", id === tabId);
+      const link = $("tab-" + id);
+      link.classList.toggle("active", id === tabId);
+      if (id === tabId) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
     }
   }
 
@@ -190,7 +217,7 @@ const App = (() => {
 
   function reportError(err) {
     const hint = err && err.rateLimited ? t("err_rate_limit") : t("err_hint");
-    setStatus("error", t("err_prefix") + (err?.message ?? err) + " — " + hint);
+    setStatus("error", t("err_prefix") + (err?.message ?? err) + ". " + hint);
   }
 
   /* Background enrichment (per-job detail, then Jita/Manifest prices) — runs

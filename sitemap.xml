@@ -1,7 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://freelancer.tonicdock.com/</loc></url>
-  <url><loc>https://freelancer.tonicdock.com/new-eden/</loc></url>
-  <url><loc>https://freelancer.tonicdock.com/exordium/</loc></url>
-  <url><loc>https://freelancer.tonicdock.com/faq/</loc></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://freelancer.tonicdock.com/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freelancer.tonicdock.com/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freelancer.tonicdock.com/de/"/>
+  </url>
+  <url>
+    <loc>https://freelancer.tonicdock.com/de/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freelancer.tonicdock.com/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freelancer.tonicdock.com/de/"/>
+  </url>
+  <url>
+    <loc>https://freelancer.tonicdock.com/new-eden/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freelancer.tonicdock.com/new-eden/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freelancer.tonicdock.com/de/new-eden/"/>
+  </url>
+  <url>
+    <loc>https://freelancer.tonicdock.com/de/new-eden/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freelancer.tonicdock.com/new-eden/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freelancer.tonicdock.com/de/new-eden/"/>
+  </url>
+  <url>
+    <loc>https://freelancer.tonicdock.com/exordium/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freelancer.tonicdock.com/exordium/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freelancer.tonicdock.com/de/exordium/"/>
+  </url>
+  <url>
+    <loc>https://freelancer.tonicdock.com/de/exordium/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freelancer.tonicdock.com/exordium/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freelancer.tonicdock.com/de/exordium/"/>
+  </url>
+  <url>
+    <loc>https://freelancer.tonicdock.com/faq/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freelancer.tonicdock.com/faq/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freelancer.tonicdock.com/de/faq/"/>
+  </url>
+  <url>
+    <loc>https://freelancer.tonicdock.com/de/faq/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freelancer.tonicdock.com/faq/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freelancer.tonicdock.com/de/faq/"/>
+  </url>
 </urlset>

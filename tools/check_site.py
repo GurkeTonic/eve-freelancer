@@ -75,14 +75,14 @@ def check_pages():
     if r.returncode:
         fail(f"build_pages.py failed: {r.stderr.strip()[:200]}")
         return
-    # Only what build_pages.py writes; index.html is its source, not its output.
-    d = subprocess.run(["git", "diff", "--name-only", "--", "*/index.html", "js/routes.js", "sitemap.xml"],
+    # Only what build_pages.py writes from src/ (every index.html, routes, sitemap).
+    d = subprocess.run(["git", "status", "--porcelain", "--", "index.html", "*/index.html", "js/routes.js", "sitemap.xml"],
                        capture_output=True, text=True, cwd=ROOT)
-    changed = d.stdout.split()
+    changed = [line[3:] for line in d.stdout.splitlines()]
     if changed:
         fail("generated files out of date, run tools/build_pages.py: " + ", ".join(changed))
     else:
-        ok("subpages, routes.js and sitemap.xml match index.html")
+        ok("pages, routes.js and sitemap.xml match src/")
 
 
 def check_esi():

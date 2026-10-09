@@ -39,22 +39,22 @@ function availableMarkets(scope) {
 }
 
 /*
- * The 10 Freelance Job methods, from the SDE's freelanceJobSchemas.jsonl
- * (build 3430261). Own short labels — the SDE only carries full sentences.
+ * The 10 Freelance Job methods with the titles the game client shows, from
+ * the SDE's freelanceJobSchemas.jsonl (build 3586130), English and German.
  */
 const JOB_METHODS = {
-  DeliverItem:      "Item delivery",
-  MineOre:          "Ore mining",
-  KillNPC:          "NPC kills",
-  KillCapsuleer:    "Capsuleer kills",
-  DamageShip:       "Ship damage",
-  RepairArmor:      "Armor repair",
-  BoostShield:      "Shield boost",
-  ShipInsurance:    "Ship insurance",
-  CaptureFWComplex: "Capture FW complex",
-  DefendFWComplex:  "Defend FW complex"
+  DeliverItem:      { en: "Deliver", de: "Liefern" },
+  MineOre:          { en: "Mine Materials", de: "Materialien abbauen" },
+  KillNPC:          { en: "Destroy Non-Capsuleers", de: "Nicht-Kapselpiloten zerstören" },
+  KillCapsuleer:    { en: "Destroy Capsuleer’s Ship", de: "Kapselpilotenschiff zerstören" },
+  DamageShip:       { en: "Damage Capsuleers", de: "Kapselpiloten beschädigen" },
+  RepairArmor:      { en: "Remote Repair Armor", de: "Fernreparatur von Panzerung" },
+  BoostShield:      { en: "Remote Boost Shield", de: "Schildfernboost" },
+  ShipInsurance:    { en: "Ship Insurance", de: "Versicherung für Schiffe" },
+  CaptureFWComplex: { en: "Capture Factional Warfare Complexes", de: "Fraktionskrieg-Komplexe einnehmen" },
+  DefendFWComplex:  { en: "Defend Factional Warfare Complexes", de: "Fraktionskrieg-Komplexe verteidigen" }
 };
 
 function jobMethodLabel(method) {
-  return JOB_METHODS[method] ?? method ?? "?";
+  return JOB_METHODS[method]?.[LANG] ?? method ?? "?";
 }

@@ -11,6 +11,23 @@
 
 const EXORDIUM_REGION = "Exordium";
 
+/* J-space solar system ids (31000000 to 31999999). */
+function isWormhole(systemId) {
+  const id = Number(systemId);
+  return id >= 31000000 && id < 32000000;
+}
+
+/* The client's colour for a shown security status, as a CSS custom
+   property name (--s10 for 1.0 … --s1 for 0.1, --s0 for everything at or
+   below 0.0). Values: ESI docs, "System Security". */
+function secColor(sec) {
+  return sec > 0 ? `var(--s${Math.round(sec * 10)})` : "var(--s0)";
+}
+
+function fmtSec(sec) {
+  return sec.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).replace("-", "\u2212");
+}
+
 function createGeo(scope) {
   const nameIndex = Object.entries(SDATA.names)
     .filter(([id]) => (SDATA.regions[id] === EXORDIUM_REGION) === (scope === "exordium"))
@@ -43,19 +60,31 @@ function createGeo(scope) {
     return SDATA.regions[systemId] || null;
   }
 
-  /* True security status, or null if unknown (e.g. a broadcast location
-     that isn't a solar system). Standard EVE thresholds: >=0.5 highsec,
-     >0 lowsec, <=0 nullsec. */
+  /* Security status as the client shows it (one decimal, stored that way
+     by tools/build_static_data.py), or null if unknown. Wormhole systems
+     are not in the static data; the client shows them as -1.0. */
   function secOf(systemId) {
     const sec = SDATA.sec[systemId];
-    return typeof sec === "number" ? sec : null;
+    if (typeof sec === "number") return sec;
+    return isWormhole(systemId) ? -1 : null;
   }
 
+  /* hs >= 0.5, ls 0.1 to 0.4, ns <= 0.0 of the shown value (ESI docs,
+     "System Security"). */
   function secClass(sec) {
     if (sec === null) return null;
     if (sec >= 0.5) return "hs";
     if (sec > 0) return "ls";
     return "ns";
+  }
+
+  /* Which column of the overview's security ladder a system falls in:
+     "10" … "1" for 1.0 … 0.1, "ns", "wh", or null when unknown. */
+  function ladderBin(systemId) {
+    if (isWormhole(systemId)) return "wh";
+    const sec = secOf(systemId);
+    if (sec === null) return null;
+    return sec > 0 ? String(Math.round(sec * 10)) : "ns";
   }
 
   /* Breadth-first search over the full k-space stargate graph. */
@@ -78,7 +107,7 @@ function createGeo(scope) {
     return dist;
   }
 
-  return { searchSystems, systemIdByName, nameOf, regionOf, secOf, secClass, jumpsFrom };
+  return { searchSystems, systemIdByName, nameOf, regionOf, secOf, secClass, ladderBin, jumpsFrom };
 }
 
 const GeoMain = createGeo("main");

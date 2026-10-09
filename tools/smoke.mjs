@@ -9,7 +9,7 @@
 import { chromium } from 'playwright';
 
 const base = (process.argv[2] || 'http://127.0.0.1:8099').replace(/\/$/, '');
-const PAGES = ['/', '/new-eden/', '/exordium/', '/faq/', '/legal/'];
+const PAGES = ['/', '/new-eden/', '/exordium/', '/faq/', '/legal/', '/de/', '/de/new-eden/', '/de/exordium/', '/de/faq/', '/de/legal/'];
 const own = new URL(base).host;
 const problems = [];
 

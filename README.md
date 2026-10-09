@@ -15,7 +15,7 @@ See [`faq/`](faq/index.html) for how each of these actually works, and [`legal/`
 
 ## Architecture
 
-Plain HTML/CSS/JS, no framework, no npm build step, no backend. `index.html` is the one source template (the dashboard); `tools/build_pages.py` generates the `new-eden/`, `exordium/`, and `faq/` subpages from it, so every board ships the full app with every panel in the DOM and switching between them is a client-side swap, not a page reload — a real navigation, direct link, or JS-disabled visit still lands on a real static page per board. Run after every change to `index.html`:
+Plain HTML/CSS/JS, no framework, no npm build step, no backend. `src/page.html` is the one source template (overview, both boards, FAQ) and `src/legal.html` the legal page; `tools/build_pages.py` writes every page from them, once in English (`/`) and once in German (`/de/`), filling in the strings from `js/i18n.js`. Every board ships the full app with every panel in the DOM, so switching between them is a client-side swap, not a page reload; a real navigation, direct link, or JS-disabled visit still lands on a real static page. Run after every change to `src/` or to the strings:
 
 ```
 python tools/build_pages.py

@@ -1,7 +1,7 @@
 /* Freelance jobs board. Depends on config.js, i18n.js, esi.js, geo.js.
 
    createJobsView() is instantiated once per board (New Eden, Exordium) —
-   both panels ship in every page (see index.html) and live in the DOM at
+   both panels ship in every page (see src/page.html) and live in the DOM at
    once, so each needs its own state closure and its own element ids
    (jobIds() below) rather than sharing "jobs-body" etc. between them. */
 "use strict";
@@ -316,13 +316,16 @@ function createJobsView(scope, geo, ids) {
       return `<span class="dim" title="${t("loc_none")}">—</span>`;
     }
     const sec = geo.secOf(loc.id);
-    const cls = geo.secClass(sec);
     const region = geo.regionOf(loc.id);
     const more = scopedLocations(j).length - 1;
     const title = j.locationFromDelivery ? `${t("loc_deliver")} ${j.delivery.stations.map(s => s.name).join(", ")}` : "";
-    return (sec !== null ? `<span class="sec sec-${cls}">${sec.toFixed(1)}</span>` : "")
-      + `<span class="sys"${title ? ` title="${esc(title)}"` : ""}>${j.locationFromDelivery ? "→ " : ""}${esc(loc.name)}</span>`
-      + (loc.jumps != null ? `<span class="j">${loc.jumps} j</span>` : "")
+    /* The colour sits in a swatch, the number stays in the text colour:
+       0.5's pale yellow or 0.1's dark red would be unreadable as text on
+       one of the two themes. */
+    return (sec !== null ? `<span class="sec" style="--c:${secColor(sec)}">${fmtSec(sec)}</span>` : "")
+      + `<span class="sys"${title ? ` title="${esc(title)}"` : ""}>${esc(loc.name)}</span>`
+      + (loc.jumps != null ? `<span class="j">${loc.jumps}\u2009j</span>` : "")
+      + (j.locationFromDelivery ? `<span class="reg">${t("loc_delivery")}</span>` : "")
       + (region ? `<span class="reg">${esc(region)}${more > 0 ? ` +${more}` : ""}</span>` : "");
   }
 
@@ -331,8 +334,12 @@ function createJobsView(scope, geo, ids) {
     if (v === "pending") return `<span class="v-none">…</span>`;
     if (v === "unknown") return `<span class="v-none" title="${t("value_unknown")}">—</span>`;
     if (!v || typeof v !== "object") return `<span class="v-none">—</span>`;
+    /* Signed distance from the market price instead of a ratio: +18 % reads
+       as "pays more than selling it" without a colour to decode. */
+    const d = Math.round((v.ratio - 1) * 100);
+    const txt = d === 0 ? "±0" : (d > 0 ? "+" : "\u2212") + fmtNum(Math.abs(d));
     const cls = v.flag === "bad" ? "v-bad" : v.flag === "good" ? "v-good" : "";
-    return `<span class="${cls}">${Math.round(v.ratio * 100)}%</span>`;
+    return `<span class="${cls}">${txt}${LANG === "de" ? "\u202f%" : "%"}</span>`;
   }
 
   function rowCells(j, { progress = true } = {}) {
@@ -413,6 +420,22 @@ function createJobsView(scope, geo, ids) {
     return counts;
   }
 
+  /* Job counts per column of the overview's security ladder: "10" … "1",
+     "ns", "wh", and "none" for jobs not broadcast anywhere. One column per
+     job, by its first broadcast location on this board, as in
+     securityBreakdown(). Null until every job's detail has loaded, so the
+     ladder draws once, complete, instead of growing in steps. */
+  function ladder(exclude) {
+    if (!hasLoaded || !jobs.every(j => j._detailLoaded)) return null;
+    const counts = { none: 0 };
+    for (const j of scopedJobs(exclude)) {
+      const locs = scopedLocations(j);
+      const bin = locs.length ? geo.ladderBin(locs[0].id) : "none";
+      if (bin) counts[bin] = (counts[bin] ?? 0) + 1;
+    }
+    return counts;
+  }
+
   /* Top N corporations by number of active jobs posted, for the "who's
      hiring" list. Only counts jobs whose detail (and so creator) has
      loaded. */
@@ -449,7 +472,7 @@ function createJobsView(scope, geo, ids) {
     let verdictLine = "";
     if (verdict && typeof verdict === "object") {
       const price = priceMap.get(`${market.key}:${job.priceableTypeId}`);
-      verdictLine = `${fmtIsk(job.rewardPerContribution)} ISK ${t("value_vs_market", { market: market.name })} ${fmtIsk(price?.buy)} ISK`;
+      verdictLine = t("value_vs_market", { reward: fmtIsk(job.rewardPerContribution), market: market.name.split(" (")[0], price: fmtIsk(price?.buy) });
     }
     const delivery = job?.delivery;
     const deliverTo = delivery && (delivery.stations.length || delivery.structures)
@@ -457,7 +480,7 @@ function createJobsView(scope, geo, ids) {
          ...(delivery.structures ? [delivery.structures > 1 ? t("loc_structures", { n: delivery.structures }) : t("loc_structure")] : [])].join("<br>")
       : "";
     const rows = [
-      [t("job_creator"), [corp, pilot].filter(Boolean).map(esc).join(" · ")],
+      [t("job_creator"), [corp, pilot].filter(Boolean).map(esc).join(", ")],
       [t("job_career"), esc(job?.career ?? "")],
       [job?.locationFromDelivery ? "" : t("th_locations"), job?.locationFromDelivery ? "" : locs],
       [t("loc_deliver"), deliverTo],
@@ -854,7 +877,7 @@ function createJobsView(scope, geo, ids) {
     document.getElementById(ids.progress).textContent = progressNote();
   }
 
-  return { load, render, prefetchDetails, prefetchPrices, stats, scopedIds, topPayouts, securityBreakdown, topCorps, toggleDetail };
+  return { load, render, prefetchDetails, prefetchPrices, stats, scopedIds, topPayouts, securityBreakdown, ladder, topCorps, toggleDetail };
 }
 
 const NewEdenJobsView = createJobsView("main", GeoMain, jobIds("main"));
