@@ -339,7 +339,14 @@ function createJobsView(scope, geo, ids) {
     const d = Math.round((v.ratio - 1) * 100);
     const txt = d === 0 ? "±0" : (d > 0 ? "+" : "\u2212") + fmtNum(Math.abs(d));
     const cls = v.flag === "bad" ? "v-bad" : v.flag === "good" ? "v-good" : "";
-    return `<span class="${cls}">${txt}${LANG === "de" ? "\u202f%" : "%"}</span>`;
+    return `<span class="${cls}">${txt}<span class="u${LANG === "de" ? "" : " u-tight"}">%</span></span>`;
+  }
+
+  /* "350 Mio." -> the number in monospace, the unit in the text face:
+     monospace is for numbers, not for words. */
+  function unitHtml(value) {
+    const m = /^([^ ]+) (\D+)$/.exec(value);
+    return m ? `${m[1]}<span class="u">${esc(m[2])}</span>` : esc(value);
   }
 
   function rowCells(j, { progress = true } = {}) {
@@ -347,14 +354,14 @@ function createJobsView(scope, geo, ids) {
     const des = j.progress?.desired ?? 0;
     const pct = des > 0 ? Math.min(100, (cur / des) * 100) : 0;
     const type = j.method ? esc(jobMethodLabel(j.method)) : (j._detailLoaded ? "" : "…");
-    const reward = j.rewardPerContribution != null ? `${fmtIsk(j.rewardPerContribution)}` : (j._detailLoaded ? "—" : "…");
+    const reward = j.rewardPerContribution != null ? unitHtml(fmtIsk(j.rewardPerContribution)) : (j._detailLoaded ? "—" : "…");
     return `
       <td class="jname"><b>${esc(eveText(j.name) || j.id)}</b><span class="t">${type}</span></td>
       <td class="loc">${locationHtml(j)}</td>
       <td class="num c-reward"><span class="reward">${reward}</span></td>
       <td class="num c-value" data-l="${t("th_value")}">${valueHtml(j)}</td>
       ${progress ? `<td class="c-prog"><span class="prog"><span class="prog-track"><span class="prog-fill" style="width:${pct.toFixed(1)}%"></span></span>${fmtNum(cur)}/${fmtNum(des)}</span></td>` : ""}
-      <td class="num c-exp" data-l="${t("th_expires")}"><span class="${isExpiringSoon(j) ? "soon" : ""}" title="${esc(fmtDate(j.expires))}">${fmtLeft(j.expires)}</span></td>`;
+      <td class="num c-exp" data-l="${t("th_expires")}"><span class="${isExpiringSoon(j) ? "soon" : ""}" title="${esc(fmtDate(j.expires))}">${unitHtml(fmtLeft(j.expires))}</span></td>`;
   }
 
   /* Exordium has no flyable route to the rest of New Eden (see geo.js) — each

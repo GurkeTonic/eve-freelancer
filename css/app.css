@@ -352,6 +352,8 @@ tbody tr.job-row:focus-visible > td { background: var(--ground-2); box-shadow: i
 
 td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .reward { font-size: var(--t16); font-weight: 650; }
+td.num .u { margin-left: 0.2em; font-family: var(--sans); font-weight: 400; font-size: var(--t14); }
+td.num .u-tight { margin-left: 0.05em; }
 .v-good { font-weight: 650; }
 .v-bad, .v-none { color: var(--ink-2); }
 .soon { font-weight: 650; }
