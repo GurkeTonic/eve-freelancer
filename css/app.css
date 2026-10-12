@@ -481,7 +481,7 @@ tr.job-detail > td { background: var(--ground-2); white-space: normal; padding: 
   table.jobs td.c-reward, table.jobs td.c-value, table.jobs td.c-exp { grid-row: 3; }
   table.jobs td.c-prog { grid-row: 4; grid-column: 1 / -1; }
   table.jobs td.c-reward { grid-column: 1; }
-  table.jobs td.c-reward .reward::after { content: " ISK"; font-weight: 400; color: var(--ink-2); font-size: var(--t12); }
+  table.jobs td.c-reward .reward:not(.cover)::after { content: " ISK"; font-weight: 400; color: var(--ink-2); font-size: var(--t12); }
   table.jobs td.c-value { grid-column: 2; text-align: right; }
   table.jobs td.c-exp { grid-column: 3; text-align: right; }
   table.jobs td[data-l]::before { content: attr(data-l) " "; font-family: var(--sans); font-size: var(--t12); color: var(--ink-2); }

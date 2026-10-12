@@ -67,6 +67,13 @@ def check_static():
         fail(f"staticdata.js: not valid JavaScript: {r.stderr.strip()[:200]}")
     else:
         ok("staticdata.js: valid JavaScript")
+    import json, re
+    m = re.search(r'"methods":(\{.*?\}\}),"graph"', p.read_text(encoding="utf-8"))
+    methods = json.loads(m.group(1)) if m else {}
+    if len(methods) < 10 or not all(v.get("en") and v.get("de") for v in methods.values()):
+        fail(f"staticdata.js: {len(methods)} job method titles, expected 10 or more in en and de")
+    else:
+        ok(f"staticdata.js: {len(methods)} job method titles")
 
 
 def check_pages():

@@ -38,23 +38,10 @@ function availableMarkets(scope) {
   return MARKETS[scope] || MARKETS.main;
 }
 
-/*
- * The 10 Freelance Job methods with the titles the game client shows, from
- * the SDE's freelanceJobSchemas.jsonl (build 3586130), English and German.
- */
-const JOB_METHODS = {
-  DeliverItem:      { en: "Deliver", de: "Liefern" },
-  MineOre:          { en: "Mine Materials", de: "Materialien abbauen" },
-  KillNPC:          { en: "Destroy Non-Capsuleers", de: "Nicht-Kapselpiloten zerstören" },
-  KillCapsuleer:    { en: "Destroy Capsuleer’s Ship", de: "Kapselpilotenschiff zerstören" },
-  DamageShip:       { en: "Damage Capsuleers", de: "Kapselpiloten beschädigen" },
-  RepairArmor:      { en: "Remote Repair Armor", de: "Fernreparatur von Panzerung" },
-  BoostShield:      { en: "Remote Boost Shield", de: "Schildfernboost" },
-  ShipInsurance:    { en: "Ship Insurance", de: "Versicherung für Schiffe" },
-  CaptureFWComplex: { en: "Capture Factional Warfare Complexes", de: "Fraktionskrieg-Komplexe einnehmen" },
-  DefendFWComplex:  { en: "Defend Factional Warfare Complexes", de: "Fraktionskrieg-Komplexe verteidigen" }
-};
-
+/* Freelance Job method titles as the game client shows them, English and
+   German, from the SDE's freelanceJobSchemas.jsonl. tools/build_static_data.py
+   writes them into js/data/staticdata.js; a method missing there shows its
+   key. */
 function jobMethodLabel(method) {
-  return JOB_METHODS[method]?.[LANG] ?? method ?? "?";
+  return SDATA.methods?.[method]?.[LANG] ?? method ?? "?";
 }

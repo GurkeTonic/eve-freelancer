@@ -142,7 +142,14 @@ function createJobsView(scope, geo, ids) {
     job.expires = d.details?.expires ?? null;
     job.creator = d.details?.creator ?? null;
     job.description = d.details?.description ?? null;
-    job.rewardPerContribution = d.contribution?.reward_per_contribution ?? null;
+    /* Ship Insurance pays a share of the loss value, not an amount per
+       contribution: the SDE calls its reward "Coverage Ratio", progress
+       counts ISK compensated, and reward_per_contribution is 1 (= 100 %)
+       on every such job seen (8 of 8 on 12.10.2026). Kept apart, so it is
+       never shown, sorted or filtered as "1 ISK". */
+    const perContribution = d.contribution?.reward_per_contribution ?? null;
+    job.coverage = job.method === "ShipInsurance" ? perContribution : null;
+    job.rewardPerContribution = job.coverage === null ? perContribution : null;
     job.broadcastLocations = d.access_and_visibility?.broadcast_locations || [];
     job.delivery = deliveryTarget(d.configuration, await ESI.stations());
     /* About one job in eight has no broadcast location. A delivery job then
@@ -354,11 +361,13 @@ function createJobsView(scope, geo, ids) {
     const des = j.progress?.desired ?? 0;
     const pct = des > 0 ? Math.min(100, (cur / des) * 100) : 0;
     const type = j.method ? esc(jobMethodLabel(j.method)) : (j._detailLoaded ? "" : "…");
-    const reward = j.rewardPerContribution != null ? unitHtml(fmtIsk(j.rewardPerContribution)) : (j._detailLoaded ? "—" : "…");
+    const reward = j.coverage != null
+      ? `${fmtNum(Math.round(j.coverage * 100))}<span class="u${LANG === "de" ? "" : " u-tight"}">% ${t("reward_cover")}</span>`
+      : j.rewardPerContribution != null ? unitHtml(fmtIsk(j.rewardPerContribution)) : (j._detailLoaded ? "—" : "…");
     return `
       <td class="jname"><b>${esc(eveText(j.name) || j.id)}</b><span class="t">${type}</span></td>
       <td class="loc">${locationHtml(j)}</td>
-      <td class="num c-reward"><span class="reward">${reward}</span></td>
+      <td class="num c-reward"><span class="reward${j.coverage != null ? " cover" : ""}"${j.coverage != null ? ` title="${esc(t("coverage_detail", { pct: fmtPct(j.coverage), left: fmtIsk(j.reward?.remaining) }))}"` : ""}>${reward}</span></td>
       <td class="num c-value" data-l="${t("th_value")}">${valueHtml(j)}</td>
       ${progress ? `<td class="c-prog"><span class="prog"><span class="prog-track"><span class="prog-fill" style="width:${pct.toFixed(1)}%"></span></span>${fmtNum(cur)}/${fmtNum(des)}</span></td>` : ""}
       <td class="num c-exp" data-l="${t("th_expires")}"><span class="${isExpiringSoon(j) ? "soon" : ""}" title="${esc(fmtDate(j.expires))}">${unitHtml(fmtLeft(j.expires))}</span></td>`;
@@ -492,6 +501,7 @@ function createJobsView(scope, geo, ids) {
       [job?.locationFromDelivery ? "" : t("th_locations"), job?.locationFromDelivery ? "" : locs],
       [t("loc_deliver"), deliverTo],
       [t("th_value"), verdictLine],
+      [t("job_coverage"), job?.coverage != null ? t("coverage_detail", { pct: fmtPct(job.coverage), left: fmtIsk(job.reward?.remaining) }) : ""],
       [t("job_progress"), job?.progress ? `${fmtNum(job.progress.current ?? 0)} / ${fmtNum(job.progress.desired ?? 0)}` : ""],
       [t("th_expires"), job?.expires ? fmtDate(job.expires) : ""]
     ].filter(([k, v]) => k && v);

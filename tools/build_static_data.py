@@ -4,7 +4,9 @@
 Produces the k-space stargate adjacency graph, system/region names, and
 security status for every k-space solar system (not just a subset) — used
 for the "distance from home" jump count, region lookup, and highsec/
-lowsec/nullsec breakdown on job broadcast locations.
+lowsec/nullsec breakdown on job broadcast locations — and the title of every
+Freelance Job method in English and German (freelanceJobSchemas.jsonl), so a
+method CCP adds arrives with the next SDE update instead of showing its key.
 
 Usage:
   python tools/build_static_data.py <path-to-sde-jsonl-zip-or-directory>
@@ -79,6 +81,15 @@ def main():
             if a in graph and b in systems and b not in graph[a]:
                 graph[a].append(b)
 
+        methods = {}
+        for row in read_jsonl(zf, "freelanceJobSchemas.jsonl"):
+            for schema in row["_value"]:
+                title = schema.get("title") or {}
+                methods[schema["_key"]] = {"en": title.get("en") or schema["_key"],
+                                           "de": title.get("de") or title.get("en") or schema["_key"]}
+        if len(methods) < 10:
+            sys.exit(f"freelanceJobSchemas.jsonl: only {len(methods)} methods")
+
     names = {sid: s["name"] for sid, s in systems.items()}
     regions = {sid: s["region"] for sid, s in systems.items()}
     sec = {sid: s["sec"] for sid, s in systems.items()}
@@ -89,6 +100,7 @@ def main():
         "names": names,
         "regions": regions,
         "sec": sec,
+        "methods": dict(sorted(methods.items())),
         "graph": graph,
     }
 
@@ -102,7 +114,7 @@ def main():
         encoding="utf-8",
     )
     print(f"wrote {OUT_PATH} ({OUT_PATH.stat().st_size // 1024} KiB)")
-    print(f"systems: {len(names)}, regions: {len(set(regions.values()))}")
+    print(f"systems: {len(names)}, regions: {len(set(regions.values()))}, job methods: {len(methods)}")
 
 
 if __name__ == "__main__":
